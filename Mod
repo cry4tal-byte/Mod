@@ -33,7 +33,7 @@ $Banner = @"
 Write-Host $Banner -ForegroundColor DarkMagenta
 Write-Host ""
 Write-Host "                Built by " -ForegroundColor Gray -NoNewline
-Write-Host "Main2Packet" -ForegroundColor DarkMagenta
+Write-Host "zVDev" -ForegroundColor DarkMagenta
 Write-Host ""
 Write-Host ("━" * 76) -ForegroundColor DarkMagenta
 Write-Host
