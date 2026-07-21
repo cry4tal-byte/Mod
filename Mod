@@ -1799,10 +1799,10 @@ Write-Host "  History hits:        " -ForegroundColor Gray -NoNewline; Write-Hos
 Write-Host
 Write-Rule "━" 76 Magenta
 Write-Host ""
-Write-Host "  ✨ Analysis complete! Thanks for using Main2Packet Mod Analyzer" -ForegroundColor DarkMagenta
+Write-Host "  ✨ Analysis complete! Thanks for using zVDev Mod Analyzer" -ForegroundColor DarkMagenta
 Write-Host ""
 Write-Host "  👤 Built by: " -ForegroundColor White -NoNewline
-Write-Host "Main2Packet" -ForegroundColor DarkMagenta
+Write-Host "zVDev" -ForegroundColor DarkMagenta
 Write-Host ""
 Write-Rule "━" 76 Magenta
 Write-Host ""
