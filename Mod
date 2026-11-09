@@ -1,4 +1,5 @@
-$Host.UI.RawUI.ForegroundColor = "DarkMagenta"
+$Host.UI.RawUI.WindowTitle = "CaveFight.de | Mod Analyzer"
+$Host.UI.RawUI.ForegroundColor = "Cyan"
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
@@ -6,62 +7,124 @@ $OutputEncoding           = [System.Text.Encoding]::UTF8
 chcp 65001 | Out-Null
 Clear-Host
 
+# ============================================================
+#  CaveFight.de  -  Mod Analyzer
+# ============================================================
+
+# ---------- Design helpers ----------
+function Write-Rule {
+    param([string]$Char = "─", [int]$Width = 76, [ConsoleColor]$Color = "Cyan")
+    Write-Host ($Char * $Width) -ForegroundColor $Color
+}
+
+function Write-SectionHeader {
+    param([string]$Title, [int]$Count, [ConsoleColor]$DotColor, [ConsoleColor]$CountColor)
+    Write-Host ""
+    Write-Host "  ▌" -ForegroundColor $DotColor -NoNewline
+    Write-Host " $Title " -ForegroundColor White -NoNewline
+    Write-Host " $Count " -ForegroundColor Black -BackgroundColor $CountColor
+    Write-Host ""
+}
+
+function Write-CardTop {
+    param([string]$Badge, [string]$Name, [ConsoleColor]$Color, [ConsoleColor]$BadgeFg = "White")
+    Write-Host ("  ┌" + ("─" * 72)) -ForegroundColor $Color
+    Write-Host "  │ " -ForegroundColor $Color -NoNewline
+    Write-Host " $Badge " -ForegroundColor $BadgeFg -BackgroundColor $Color -NoNewline
+    Write-Host "  $Name" -ForegroundColor Yellow
+    Write-Host ("  ├" + ("─" * 72)) -ForegroundColor $Color
+}
+
+function Write-CardBottom {
+    param([ConsoleColor]$Color)
+    Write-Host "  │" -ForegroundColor $Color
+    Write-Host ("  └" + ("─" * 72)) -ForegroundColor $Color
+    Write-Host ""
+}
+
+function Write-CardList {
+    param([string]$Title, $Items, [ConsoleColor]$Color, [ConsoleColor]$ItemColor)
+    Write-Host "  │" -ForegroundColor $Color
+    Write-Host "  │  " -ForegroundColor $Color -NoNewline
+    Write-Host $Title -ForegroundColor DarkGray
+    foreach ($i in $Items) {
+        Write-Host "  │    " -ForegroundColor $Color -NoNewline
+        Write-Host "▸ " -ForegroundColor $ItemColor -NoNewline
+        Write-Host $i -ForegroundColor $ItemColor
+    }
+}
+
+function Write-FlagList {
+    param($Flags, [ConsoleColor]$Color, [string]$Icon)
+    foreach ($flag in $Flags) {
+        if ($flag -match "^(.+?) — (.+)$") { $t = $matches[1]; $d = $matches[2] } else { $t = $flag; $d = "" }
+        Write-Host "  │" -ForegroundColor $Color
+        Write-Host "  │  " -ForegroundColor $Color -NoNewline
+        Write-Host "$Icon " -ForegroundColor $Color -NoNewline
+        Write-Host $t -ForegroundColor White
+        if ($d -ne "") {
+            Write-Host "  │     " -ForegroundColor $Color -NoNewline
+            Write-Host $d -ForegroundColor Gray
+        }
+    }
+}
+
 function Write-HiddenBadge {
     param([System.IO.FileSystemInfo]$File)
     if ($File.Attributes -band [System.IO.FileAttributes]::Hidden) {
-        Write-Host " [MOD IS HIDDEN]" -ForegroundColor Magenta -NoNewline
+        Write-Host " [MOD IS HIDDEN]" -ForegroundColor Cyan -NoNewline
     }
 }
 
 $currentFont = (Get-ItemProperty "HKCU:\Console" -ErrorAction SilentlyContinue).FaceName
 if ($currentFont -notmatch "NSimSun|Gothic|Noto") {
-    Write-Host "  Tip: To see all Unicode characters, set the terminal font to 'NSimSun'" -ForegroundColor DarkYellow
+    Write-Host "  Tipp: Für alle Sonderzeichen die Terminal-Schrift auf 'NSimSun' stellen" -ForegroundColor DarkYellow
     Write-Host
 }
 
 $Banner = @"
 
-███████╗██████╗  █████╗ ██╗   ██╗██╗ ██████╗
-╚══███╔╝██╔══██╗██╔══██╗██║   ██║██║██╔═══██╗
-  ███╔╝ ██║  ██║███████║██║   ██║██║██║   ██║
- ███╔╝  ██║  ██║██╔══██║╚██╗ ██╔╝██║██║▄▄ ██║
-███████╗██████╔╝██║  ██║ ╚████╔╝ ██║╚██████╔╝
-╚══════╝╚═════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝ ╚══▀▀═╝
+ ██████╗ █████╗ ██╗   ██╗███████╗███████╗██╗ ██████╗ ██╗  ██╗████████╗
+██╔════╝██╔══██╗██║   ██║██╔════╝██╔════╝██║██╔════╝ ██║  ██║╚══██╔══╝
+██║     ███████║██║   ██║█████╗  █████╗  ██║██║  ███╗███████║   ██║   
+██║     ██╔══██║╚██╗ ██╔╝██╔══╝  ██╔══╝  ██║██║   ██║██╔══██║   ██║   
+╚██████╗██║  ██║ ╚████╔╝ ███████╗██║     ██║╚██████╔╝██║  ██║   ██║   
+ ╚═════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   
 
 "@
 
-Write-Host $Banner -ForegroundColor DarkMagenta
+Write-Host $Banner -ForegroundColor Cyan
+Write-Host "                        " -NoNewline
+Write-Host " CaveFight.de " -ForegroundColor Black -BackgroundColor Cyan -NoNewline
+Write-Host "  Mod Analyzer" -ForegroundColor Gray
 Write-Host ""
-Write-Host "                Built by " -ForegroundColor Gray -NoNewline
-Write-Host "zVDev" -ForegroundColor DarkMagenta
-Write-Host ""
-Write-Host ("━" * 76) -ForegroundColor DarkMagenta
+Write-Host ("━" * 76) -ForegroundColor DarkCyan
 Write-Host
 
-Write-Host "Enter path to the mods folder: " -NoNewline
-Write-Host "(press Enter to use default)" -ForegroundColor DarkGray
-$modsPath = Read-Host "PATH"
+Write-Host "  Pfad zum Mods-Ordner eingeben: " -NoNewline
+Write-Host "(Enter = Standardpfad)" -ForegroundColor DarkGray
+$modsPath = Read-Host "  PFAD"
 Write-Host
 
 if ([string]::IsNullOrWhiteSpace($modsPath)) {
     $modsPath = "$env:USERPROFILE\AppData\Roaming\.minecraft\mods"
-    Write-Host "Continuing with " -NoNewline
+    Write-Host "  Verwende " -NoNewline
     Write-Host $modsPath -ForegroundColor White
     Write-Host
 }
 
 if (-not (Test-Path $modsPath -PathType Container)) {
-    Write-Host "❌ Invalid Path!" -ForegroundColor Red
-    Write-Host "The directory does not exist or is not accessible." -ForegroundColor Yellow
+    Write-Host "  ❌ Ungültiger Pfad!" -ForegroundColor Red
+    Write-Host "  Der Ordner existiert nicht oder ist nicht erreichbar." -ForegroundColor Yellow
     Write-Host
-    Write-Host "Tried to access: $modsPath" -ForegroundColor Gray
+    Write-Host "  Versucht: $modsPath" -ForegroundColor Gray
     Write-Host
-    Write-Host "Press any key to exit..." -ForegroundColor Gray
+    Write-Host "  Beliebige Taste zum Beenden..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit 1
 }
 
-Write-Host "📁 Scanning directory: $modsPath" -ForegroundColor Magenta
+Write-Host "  📁 Scanne Ordner: $modsPath" -ForegroundColor Cyan
 Write-Host
 
 $mcProcess = Get-Process javaw -ErrorAction SilentlyContinue
@@ -73,9 +136,9 @@ if ($mcProcess) {
     try {
         $startTime = $mcProcess.StartTime
         $uptime = (Get-Date) - $startTime
-        Write-Host "🕒 { Minecraft Uptime }" -ForegroundColor DarkMagenta
-        Write-Host "   $($mcProcess.Name) PID $($mcProcess.Id) started at $startTime" -ForegroundColor Gray
-        Write-Host "   Running for: $($uptime.Hours)h $($uptime.Minutes)m $($uptime.Seconds)s" -ForegroundColor Gray
+        Write-Host "  🕒 Minecraft Uptime" -ForegroundColor DarkCyan
+        Write-Host "     $($mcProcess.Name) PID $($mcProcess.Id) gestartet um $startTime" -ForegroundColor Gray
+        Write-Host "     Läuft seit: $($uptime.Hours)h $($uptime.Minutes)m $($uptime.Seconds)s" -ForegroundColor Gray
         Write-Host ""
     } catch { }
 }
@@ -123,472 +186,1034 @@ $suspiciousPatterns = @(
 )
 
 $cheatStrings = @(
-    "AutoCrystal", "autocrystal", "auto crystal", "auto.crystal", "auto!crystal", "auto?crystal", "auto-crystal", "cw crystal",
-    "Auto.Crystal", "Auto!Crystal", "Auto?Crystal", "Auto-Crystal",
-    "dontPlaceCrystal", "dontBreakCrystal",
-    "AutoHitCrystal", "autohitcrystal", "canPlaceCrystalServer", "healPotSlot",
-    "ＡｕｔｏＣｒｙｓｔａｌ", "Ａｕｔｏ Ｃｒｙｓｔａｌ",
-    "ＡｕｔｏＨｉｔＣｒｙｓｔａｌ",
-    "AutoAnchor", "autoanchor", "auto anchor", "DoubleAnchor",
-     "HasAnchor", "anchortweaks", "anchor macro", "safe anchor", "safeanchor",
-    "SafeAnchor", "AirAnchor",
-    "ＡｕｔｏＡｎｃｈｏｒ", "Ａｕｔｏ Ａｎｃｈｏｒ",
-    "ＤｏｕｂｌｅＡｎｃｈｏｒ", "Ｄｏｕｂｌｅ Ａｎｃｈｏｒ",
-    "ＳａｆｅＡｎｃｈｏｒ", "Ｓａｆｅ Ａｎｃｈｏｒ",
-    "Ａｎｃｈｏｒ Ｍａｃｒｏ", "anchorMacro",
-    "Auto_Crystal", "auto_Crystal", "Auto_crystal", "auto_crystal",
-    "Auto_Crystal_v2", "auto_Crystal_v2", "Auto_crystal_v2", "auto_crystal_v2",
-    "Auto_Crystal_Plus", "auto_Crystal_Plus", "Auto_crystal_Plus", "auto_crystal_Plus",
-    "Auto_Crystal_Pro", "auto_Crystal_Pro", "Auto_crystal_Pro", "auto_crystal_Pro",
-    "Auto_Hit_Crystal", "auto_Hit_Crystal", "Auto_hit_Crystal", "auto_hit_Crystal",
-    "Auto_HitCrystal", "auto_HitCrystal", "Auto_hitCrystal", "auto_hitCrystal",
-    "Auto_Anchor", "auto_Anchor", "Auto_anchor", "auto_anchor",
-    "Double_Anchor", "double_Anchor", "Double_anchor", "double_anchor",
-    "Anchor_Macro", "anchor_Macro", "Anchor_macro", "anchor_macro",
-    "Safe_Anchor", "safe_Anchor", "Safe_anchor", "safe_anchor",
-    "Air_Anchor", "air_Anchor", "Air_anchor", "air_anchor",
-    "Has_Anchor", "has_Anchor", "Has_anchor", "has_anchor",
-    "Anchor_Tweaks", "anchor_Tweaks", "Anchor_tweaks", "anchor_tweaks",
-    "Safe_Anchor_Plus", "safe_Anchor_Plus", "Safe_anchor_Plus", "safe_anchor_Plus",
-    "Double_Anchor_2", "double_Anchor_2", "Double_anchor_2", "double_anchor_2",
-    "Anchor_Macro_2", "anchor_Macro_2", "Anchor_macro_2", "anchor_macro_2",
-    "Auto_Anchor_Plus", "auto_Anchor_Plus", "Auto_anchor_Plus", "auto_anchor_Plus",
-    "Air_Anchor_Plus", "air_Anchor_Plus", "Air_anchor_Plus", "air_anchor_Plus",
-    "AnchorMacro_2", "anchorMacro_2", "Anchor_Macro_v2", "anchor_Macro_v2",
-    "Anchor_macro_v2", "anchor_macro_v2", "Auto_anchor_v2", "auto_anchor_v2",
-    "Auto_Crystal_Alt", "auto_Crystal_Alt", "Auto_crystal_Alt", "auto_crystal_Alt",
-    "Crystal_Auto", "crystal_Auto", "Crystal_auto", "crystal_auto",
-    "Anchor_Safe", "anchor_Safe", "Anchor_safe", "anchor_safe",
-    "Anchor_Pro", "anchor_Pro", "Anchor_pro", "anchor_pro",
-    "Auto_Anchor_Alt", "auto_Anchor_Alt", "Auto_anchor_Alt", "auto_anchor_Alt",
-    "AutoTotem", "autototem", "auto totem", "Auto_Totem", "auto_Totem", "auto_totem", "InventoryTotem",
-    "inventorytotem", "HoverTotem", "hover totem", "Hover_Totem", "hover_Totem", "hover_totem", "legittotem",
-    "ＡｕｔｏＴｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ",
-    "ＨｏｖｅｒＴｏｔｅｍ", "Ｈｏｖｅｒ Ｔｏｔｅｍ",
-    "ＩｎｖｅｎｔｏｒｙＴｏｔｅｍ", "Ａｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ",
-    "Ａｕｔｏ Ｔｏｔｅｍ Ｈｉｔ", "AutoTotem_Hit", "autoTotem_Hit", "auto_totem_hit", "Auto_Totem_Hit", "auto_Totem_Hit",
-    "AutoPot", "autopot", "auto pot", "Auto_pot", "auto_pot", "Auto_Pot", "AUTO_POT", "Auto_Pot_Refill", "auto_Pot_Refill", "auto_pot_refill", "Auto_pot_refill", "AUTO_POT_REFILL",
-    "Auto_Pot_Hit", "auto_Pot_Hit", "auto_pot_hit", "Auto_pot_hit", "AUTO_POT_HIT", "Auto_Pot_Slot", "auto_Pot_Slot", "auto_pot_slot", "Auto_pot_slot", "AUTO_POT_SLOT",
-    "Auto_Pot_Use", "auto_Pot_Use", "auto_pot_use", "Auto_pot_use", "AUTO_POT_USE", "Auto_Pot_Auto", "auto_Pot_Auto", "auto_pot_auto", "Auto_pot_auto", "AUTO_POT_AUTO",
-    "Auto_Pot_Bot", "auto_Pot_Bot", "auto_pot_bot", "Auto_pot_bot", "AUTO_POT_BOT",
-    "AutoArmor", "autoarmor", "auto armor", "Auto_Armor", "auto_Armor", "auto_armor", "Auto_armor", "AUTO_ARMOR", "Auto_Armor_Equip", "auto_Armor_Equip",
-    "auto_armor_equip", "Auto_armor_equip", "AUTO_ARMOR_EQUIP", "Auto_Armor_Swap", "auto_Armor_Swap", "auto_armor_swap", "Auto_armor_swap", "AUTO_ARMOR_SWAP", "Auto_Armor_Set", "auto_Armor_Set",
-    "auto_armor_set", "Auto_armor_set", "AUTO_ARMOR_SET", "Auto_Armor_Bot", "auto_Armor_Bot", "auto_armor_bot", "Auto_armor_bot", "AUTO_ARMOR_BOT",
-    "Auto_Crystal", "auto_Crystal", "auto_crystal", "Auto_crystal", "AUTO_CRYSTAL", "Auto_Crystal_Alt", "auto_Crystal_Alt", "auto_crystal_alt", "Auto_crystal_alt", "AUTO_CRYSTAL_ALT",
-    "Auto_Crystal_Bot", "auto_Crystal_Bot", "auto_crystal_bot", "Auto_crystal_bot", "AUTO_CRYSTAL_BOT", "Auto_Crystal_Assist", "auto_Crystal_Assist", "auto_crystal_assist", "Auto_crystal_assist", "AUTO_CRYSTAL_ASSIST",
-    "Auto_Crystal_Helper", "auto_Crystal_Helper", "auto_crystal_helper", "Auto_crystal_helper", "AUTO_CRYSTAL_HELPER",
-    "Auto_Anchor", "auto_Anchor", "auto_anchor", "Auto_anchor", "AUTO_ANCHOR", "Anchor_Macro", "anchor_Macro", "anchor_macro", "Anchor_macro", "ANCHOR_MACRO",
-    "Safe_Anchor", "safe_Anchor", "safe_anchor", "Safe_anchor", "SAFE_ANCHOR", "Double_Anchor", "double_Anchor", "double_anchor", "Double_anchor", "DOUBLE_ANCHOR",
-    "Air_Anchor", "air_Anchor", "air_anchor", "Air_anchor", "AIR_ANCHOR", "Has_Anchor", "has_Anchor", "Has_anchor", "has_anchor", "HAS_ANCHOR",
-    "Silent Rotations", "SilentRotations", "Silent_Rotations", "silent_Rotations", "silent_rotations", "Silent_rotations", "SILENT_ROTATIONS", "Silent_Rotation", "silent_Rotation", "silent_rotation",
-    "Silent_rotation", "SILENT_ROTATION", "Silent_Rotations_Mode", "silent_Rotations_Mode", "silent_rotations_mode", "Silent_rotations_mode", "SILENT_ROTATIONS_MODE", "Silent_Rotate", "silent_Rotate", "silent_rotate",
-    "Silent_rotate", "SILENT_ROTATE",
-    "AutoArmor", "autoarmor", "auto armor",
-    "ＡｕｔｏＰｏｔ", "Ａｕｔｏ Ｐｏｔ",
-    "Ａｕｔｏ Ｐｏｔ Ｒｅｆｉｌｌ", "AutoPotRefill",
-    "ＡｕｔｏＴｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ",
-    "ＨｏｖｅｒＴｏｔｅｍ", "Ｈｏｖｅｒ Ｔｏｔｅｍ",
-    "ＩｎｖｅｎｔｏｒｙＴｏｔｅｍ", "Ａｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ",
-    "Ａｕｔｏ Ｔｏｔｅｍ Ｈｉｔ",
-    "ＡｕｔｏＡｒｍｏｒ", "Ａｕｔｏ Ａｒｍｏｒ",
-    "preventSwordBlockBreaking", "preventSwordBlockAttack",
-    "ShieldDisabler", "ShieldBreaker",
-    "ＳｈｉｅｌｄＤｉｓａｂｌｅｒ", "Ｓｈｉｅｌｄ Ｄｉｓａｂｌｅｒ",
-    "Breaking shield with axe...",
-    "AutoDoubleHand", "autodoublehand", "auto double hand",
-    "ＡｕｔｏＤｏｕｂｌｅＨａｎｄ", "Ａｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ",
-    "AutoClicker",
-    "ＡｕｔｏＣｌｉｃｋｅｒ",
-    "Failed to switch to mace after axe!",
-    "AutoMace", "Auto_Mace", "auto_Mace", "auto_mace", "MaceSwap", "SpearSwap",
-    "ＡｕｔｏＭａｃｅ", "Ａｕｔｏ Ｍａｃｅ",
-    "ＭａｃｅＳｗａｐ", "Ｍａｃｅ Ｓｗａｐ",
-    "Ｓｐｅａｒ Ｓｗａｐ", "Ａｕｔｏｍａｔｉｃａｌｌｙ ａｘｅ ａｎｄ ｍａｃｅ ｓｈｉｅｌｄｅｄ ｐｌａｙｅｒｓ",
-    "Ｓｔｕｎ Ｓｌａｍ", "StunSlam",
-    "Donut", "JumpReset", "axespam", "axe spam",
-    "EndCrystalItemMixin",
-    "findKnockbackSword", "attackRegisteredThisClick",
-    "AimAssist", "aimassist", "aim assist", "Aim_assist", "Aim.assist", "Aim!assist", "Aim?assist", "Aim-assist",
-    "Aim:assist", "Aim/assist", "Aim|assist", "Aim~assist", "Aim*assist",
-    "aim.assist", "aim!assist", "aim?assist", "aim-assist",
-    "aim:assist", "aim/assist", "aim|assist", "aim~assist", "aim*assist",
-    "triggerbot", "trigger bot", "trigger_bot", "Trigger_Bot", "trigger_Bot",
-    "ＡｉｍＡｓｓｉｓｔ", "Ａｉｍ Ａｓｓｉｓｔ",
-    "ＴｒｉｇｇｅｒＢｏｔ", "Ｔｒｉｇｇｅｒ Ｂｏｔ",
-    "Silent Rotations", "SilentRotations", "Silent_Rotations", "silent_Rotations", "silent_rotations", "Silent_rotations",
-    "Ｓｉｌｅｎｔ Ｒｏｔａｔｉｏｎｓ",
-    "FakeInv", "swapBackToOriginalSlot",
-    "FakeLag", "pingspoof", "ping spoof",
-    "ＦａｋｅＬａｇ", "Ｆａｋｅ Ｌａｇ",
-    "fakePunch", "Fake Punch",
-    "Ｆａｋｅ Ｐｕｎｃｈ",
-    "webmacro", "web macro",
-    "AntiWeb", "AutoWeb", "Anti_trap",
-    "Ａｎｔｉ Ｗｅｂ", "ＡｕｔｏＷｅｂ",
-    "Ｐｌａｃｅｓ Ｗｅｂｓ Ｏｎ Ｅｎｅｍｉｅｓ",
-    "lvstrng", "dqrkis", "selfdestruct", "self destruct",
-    "WalksyCrystalOptimizerMod", "WalksyOptimizer", "WalskyOptimizer",
-    "Ｗａｌｋｓｙ Ｏｐｔｉｍｉｚｅｒ",
-    "autoCrystalPlaceClock",
-    "AutoFirework", "ElytraSwap", "FastXP", "FastExp", "NoJumpDelay",
-    "ＥｌｙｔｒａＳｗａｐ", "Ｅｌｙｔｒａ Ｓｗａｐ",
-    "PackSpoof", "Antiknockback", "catlean",
-    "AuthBypass", "obfuscatedAuth", "LicenseCheckMixin",
-    "BaseFinder", "invsee", "ItemExploit",
-    "FreezePlayer",
-    "Ｆｒｅｅｃａｍ", "Ｍｏｖｅ ｆｒｅｅｌｙ ｔｈｒｏｕｇｈ ｗａｌｌｓ",
-    "Ｎｏ Ｃｌｉｐ", "Ｆｒｅｅｚｅ Ｐｌａｙｅｒ",
-    "LWFH Crystal",
-    "ＬＷＦＨ Ｃｒｙｓｔａｌ",
-    "KeyPearl", "LootYeeter",
-    "ＫｅｙＰｅａｒｌ", "Ｋｅｙ Ｐｅａｒｌ",
-    "Ｌｏｏｔ Ｙｅｅｔｅｒ",
-    "FastPlace",
-    "Ｆａｓｔ Ｐｌａｃｅ", "Ｐｌａｃｅ ｂｌｏｃｋｓ ｆａｓｔｅｒ",
-    "AutoBreach",
-    "Ａｕｔｏ Ｂｒｅａｃｈ",
-    "setBlockBreakingCooldown", "getBlockBreakingCooldown", "blockBreakingCooldown",
-    "onBlockBreaking", "setItemUseCooldown",
-    "setSelectedSlot", "invokeDoAttack", "invokeDoItemUse", "invokeOnMouseButton",
-    "onPushOutOfBlocks", "onIsGlowing",
-    "Automatically switches to sword when hitting with totem",
-    "arrayOfString", "POT_CHEATS",
-    "Dqrkis Client", "Entity.isGlowing",
-    "Activate Key", "Ａｃｔｉｖａｔｅ Ｋｅｙ",
-    "Click Simulation", "Ｃｌｉｃｋ Ｓｉｍｕｌａｔｉｏｎ",
-    "On RMB", "Ｏｎ ＲＭＢ",
-    "No Count Glitch", "Ｎｏ Ｃｏｕｎｔ Ｇｌｉｔｃｈ",
-    "No Bounce", "NoBounce", "Ｎｏ Ｂｏｕｎｃｅ", "ＮｏＢｏｕｎｃｅ", "No_Bounce", "no_Bounce", "no_bounce",
-    "Ｒｅｍｏｖｅｓ ｔｈｅ ｃｒｙｓｔａｌ ｂｏｕｎｃｅ ｂａｎｄ ａｎｉｍａｔｉｏｎ",
-    "Place Delay", "Ｐｌａｃｅ Ｄｅｌａｙ", "Place_Delay", "place_Delay", "place_delay", "Place_delay",
-    "Break Delay", "Ｂｒｅａｋ Ｄｅｌａｙ", "Break_Delay", "break_Delay", "break_delay",
-    "Fast Mode", "Ｆａｓｔ Ｍｏｄｅ",
-    "Place Chance", "Ｐｌａｃｅ Ｃｈａｎｃｅ", "Place_Chance", "place_Chance", "place_change", "Place_change",
-    "Break Chance", "Ｂｒｅａｋ Ｃｈａｎｃｅ", "Break_Chance", "break_Chance", "break_change", "Break_change",
-    "Stop On Kill", "Ｓｔｏｐ Ｏｎ Ｋｉｌｌ", "Stop_On_Kill", "stop_On_Kill", "stop_on_kill", "Stop_on_kill",
-    "Ｄａｍａｇｅ Ｔｉｃｋ", "damagetick", "Damage_Tick", "damage_Tick", "damage_tick", "damage_ticket",
-    "Anti Weakness", "Ａｎｔｉ Ｗｅａｋｎｅｓｓ", "Anti_Weakness", "anti_Weakness", "anti_weakness",
-    "Particle Chance", "Ｐａｒｔｉｃｌｅ Ｃｈａｎｃｅ",
-    "Trigger Key", "Ｔｒｉｇｇｅｒ Ｋｅｙ",
-    "Switch Delay", "Ｓｗｉｔｃｈ Ｄｅｌａｙ", "Switch_Delay", "switch_Delay", "switch_delay",
-    "Totem Slot", "Ｔｏｔｅｍ Ｓｌｏｔ", "Totem_Slot", "totem_Slot", "totem_slot",
-    "Silent Rotations", "Ｓｉｌｅｎｔ Ｒｏｔａｔｉｏｎｓ",
-    "Smooth Rotations", "Ｓｍｏｏｔｈ Ｒｏｔａｔｉｏｎｓ",
-    "Rotation Speed", "Ｒｏｔａｔｉｏｎ Ｓｐｅｅｄ", "Rotation_Speed", "rotation_Speed", "rotation_speed",
-    "Use Easing", "Ｕｓｅ Ｅａｓｉｎｇ", "Use_Easing", "use_Easing", "use_easing",
-    "Easing Strength", "Ｅａｓｉｎｇ Ｓｔｒｅｎｇｔｈ", "Easing_Strength", "easing_Strength", "easing_strength",
-    "While Use", "Ｗｈｉｌｅ Ｕｓｅ", "While_Use", "while_Use", "while_use",
-    "Stop on Kill", "Ｓｔｏｐ ｏｎ Ｋｉｌｌ",
-    "Click Simulation", "Ｃｌｉｃｋ Ｓｉｍｕｌａｔｉｏｎ",
-    "Glowstone Delay", "Ｇｌｏｗｓｔｏｎｅ Ｄｅｌａｙ",
-    "Glowstone Chance", "Ｇｌｏｗｓｔｏｎｅ Ｃｈａｎｃｅ",
-    "Explode Delay", "Ｅｘｐｌｏｄｅ Ｄｅｌａｙ", "Explode_Delay", "explode_Delay", "explode_delay",
-    "Explode Chance", "Ｅｘｐｌｏｄｅ Ｃｈａｎｃｅ", "Explode_Chance", "explode_Chance", "explode_chance",
-    "Explode Slot", "Ｅｘｐｌｏｄｅ Ｓｌｏｔ", "Explode_Slot", "explode_Slot", "explode_slot",
-    "Only Charge", "Ｏｎｌｙ Ｃｈａｒｇｅ",
-    "Anchor Macro", "Ａｎｃｈｏｒ Ｍａｃｒｏ",
-    "Reach Distance", "Ｒｅａｃｈ Ｄｉｓｔａｎｃｅ",
-    "Min Height", "Ｍｉｎ Ｈｅｉｇｈｔ",
-    "Min Fall Speed", "Ｍｉｎ Ｆａｌｌ Ｓｐｅｅｄ",
-    "Attack Delay", "Ａｔｔａｃｋ Ｄｅｌａｙ",
-    "Breach Delay", "Ｂｒｅａｃｈ Ｄｅｌａｙ",
-    "Require Elytra", "Ｒｅｑｕｉｒｅ Ｅｌｙｔｒａ",
-    "Auto Switch Back", "Ａｕｔｏ Ｓｗｉｔｃｈ Ｂａｃｋ",
-    "Check Line of Sight", "Ｃｈｅｃｋ Ｌｉｎｅ ｏｆ Ｓｉｇｈｔ",
-    "Only When Falling", "Ｏｎｌｙ Ｗｈｅｎ Ｆａｌｌｉｎｇ",
-    "Require Crit", "Ｒｅｑｕｉｒｅ Ｃｒｉｔ",
-    "Show Status Display", "Ｓｈｏｗ Ｓｔａｔｕｓ Ｄｉｓｐｌａｙ",
-    "Stop On Crystal", "Ｓｔｏｐ Ｏｎ Ｃｒｙｓｔａｌ",
-    "Check Shield", "Ｃｈｅｃｋ Ｓｈｉｅｌｄ",
-    "On Pop", "Ｏｎ Ｐｏｐ",
-    "Predict Damage", "Ｐｒｅｄｉｃｔ Ｄａｍａｇｅ",
-    "On Ground", "Ｏｎ Ｇｒｏｕｎｄ",
-    "Check Players", "Ｃｈｅｃｋ Ｐｌａｙｅｒｓ",
-    "Predict Crystals", "Ｐｒｅｄｉｃｔ Ｃｒｙｓｔａｌｓ",
-    "Check Aim", "Ｃｈｅｃｋ Ａｉｍ",
-    "Check Items", "Ｃｈｅｃｋ Ｉｔｅｍｓ",
-    "Activates Above", "Ａｃｔｉｖａｔｅｓ Ａｂｏｖｅ",
-    "Blatant", "Ｂｌａｔａｎｔ",
-    "Force Totem", "Ｆｏｒｃｅ Ｔｏｔｅｍ",
-    "Stay Open For", "Ｓｔａｙ Ｏｐｅｎ Ｆｏｒ",
-    "Auto Inventory Totem", "Ａｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ",
-    "Only On Pop", "Ｏｎｌｙ Ｏｎ Ｐｏｐ",
-    "Vertical Speed", "Ｖｅｒｔｉｃａｌ Ｓｐｅｅｄ",
-    "Hover Totem", "Ｈｏｖｅｒ Ｔｏｔｅｍ",
-    "Swap Speed", "Ｓｗａｐ Ｓｐｅｅｄ",
-    "Strict One-Tick", "Ｓｔｒｉｃｔ Ｏｎｅ－Ｔｉｃｋ",
-    "Mace Priority", "Ｍａｃｅ Ｐｒｉｏｒｉｔｙ",
-    "Min Totems", "Ｍｉｎ Ｔｏｔｅｍｓ",
-    "Min Pearls", "Ｍｉｎ Ｐｅａｒｌｓ",
-    "Totem First", "Ｔｏｔｅｍ Ｆｉｒｓｔ",
-    "Drop Interval", "Ｄｒｏｐ Ｉｎｔｅｒｖａｌ",
-    "Random Pattern", "Ｒａｎｄｏｍ Ｐａｔｔｅｒｎ",
-    "Loot Yeeter", "Ｌｏｏｔ Ｙｅｅｔｅｒ", "Stay_Open_For_Loot_Yeeter", "stay_open_for_loot_yeeter", "Stay_Open_For_Loot_Yeater", "stay_open_for_loot_yeater",
-    "Horizontal Aim Speed", "Ｈｏｒｉｚｏｎｔａｌ Ａｉｍ Ｓｐｅｅｄ",
-    "Vertical Aim Speed", "Ｖｅｒｔｉｃａｌ Ａｉｍ Ｓｐｅｅｄ",
-    "Include Head", "Ｉｎｃｌｕｄｅ Ｈｅａｄ",
-    "Web Delay", "Ｗｅｂ Ｄｅｌａｙ",
-    "Holding Web", "Ｈｏｌｄｉｎｇ Ｗｅｂ",
-    "Not When Affects Player", "Ｎｏｔ Ｗｈｅｎ Ａｆｆｅｃｔｓ Ｐｌａｙｅｒ",
-    "Hit Delay", "Ｈｉｔ Ｄｅｌａｙ",
-    "Ｓｗｉｔｃｈ Ｂａｃｋ",
-    "Require Hold Axe", "Ｒｅｑｕｉｒｅ Ｈｏｌｄ Ａｘｅ",
-    "Fake Punch", "Ｆａｋｅ Ｐｕｎｃｈ",
-    "placeInterval", "breakInterval", "stopOnKill",
-    "activateOnRightClick", "holdCrystal",
-    "ｐｌａｃｅＩｎｔｅｒｖａｌ", "ｂｒｅａｋＩｎｔｅｒｖａｌ",
-    "ｓｔｏｐＯｎＫｉｌｌ", "ａｃｔｉｖａｔｅＯｎＲｉｇｈｔＣｌｉｃｋ",
-    "ｄａｍａｇｅｔｉｃｋ", "ｈｏｌｄＣｒｙｓｔａｌ",
-    "ｆａｋｅＰｕｎｃｈ",
-    "Ｒｅｆｉｌｌｓ ｙｏｕｒ ｈｏｔｂａｒ ｗｉｔｈ ｐｏｔｉｏｎｓ",
-    "Ｋｅｐｓ ｙｏｕ ｓｐｒｉｎｔｉｎｇ ａｔ ａｌｌ ｔｉｍｅｓ",
-    "Ｐｌａｃｅｓ ａｎｃｈｏｒ， ｃｈａｒｇｅｓ ｉｔ， ｐｒｏｔｅｃｔｓ ｙｏｕ， ａｎｄ ｅｘｐｌｏｄｅｓ",
-    "Ａｕｔｏ ｓｗａｐ ｔｏ ｓｐｅａｒ ｏｎ ａｔｔａｃｋ",
-    "Macro Key", "Ａｕｔｏ Ｐｏｔ", "Ｍａｃｒｏ Ｋｅｙ",
-    "KillAura", "ClickAura", "MultiAura", "ForceField", "LegitAura",
-    "AimBot", "AutoAim", "SilentAim", "AimLock", "HeadSnap",
-    "CrystalAura",
-    "AnchorAura", "AnchorFill", "AnchorPlace",
-    "BedAura", "AutoBed", "BedBomb", "BedPlace",
-    "BowAimbot", "BowSpam", "AutoBow",
-    "AutoCrit", "CritBypass", "AlwaysCrit", "CriticalHit",
-    "ReachHack", "ExtendReach", "LongReach", "HitboxExpand",
-    "AntiKB", "NoKnockback", "GrimVelocity", "GrimDisabler", "VelocitySpoof", "KBReduce",
-    "OffhandTotem", "TotemSwitch",
-    "AutoWeapon", "AutoSword", "AutoCity", "Burrow", "SelfTrap",
-    "HoleFiller", "AntiSurround", "AntiBurrow",
-    "WTap", "TargetStrafe", "AutoGap", "AutoPearl",
-    "FlyHack", "CreativeFlight", "BoatFly", "PacketFly", "AirJump",
-    "SpeedHack", "BHop", "BunnyHop",
-    "AntiFall", "NoFallDamage", "SafeFall",
-    "StepHack", "FastClimb", "AutoStep", "HighStep",
-    "WaterWalk", "LiquidWalk", "LavaWalk",
-    "NoSlow", "NoSlowdown", "NoWeb", "NoSoulSand",
-    "WallHack",
-    "ElytraSpeed", "InstantElytra",
-    "ScaffoldWalk", "FastBridge", "BuildHelper", "AutoBridge",
-    "Nuker", "NukerLegit", "InstantBreak",
-    "GhostHand", "NoSwing",
-    "PlaceAssist", "AirPlace", "AutoPlace", "InstantPlace",
-    "PlayerESP", "MobESP", "ItemESP", "StorageESP", "ChestESP",
-    "Tracers", "NameTagsHack",
-    "XRayHack", "OreFinder", "CaveFinder", "OreESP",
-    "NewChunks", "ChunkBorders", "TunnelFinder",
-    "TargetHUD", "ReachDisplay",
-    "DoubleClicker", "JitterClick", "ButterflyClick", "CPSBoost",
-    "ChestStealer", "InvManager", "InvMovebypass",
-    "AutoSprint", "AntiAFK", "AutoRespawn",
-    "FakeNick", "PopSwitch",
-    "FakeLatency", "FakePing", "SpoofRotation", "PositionSpoof",
-    "GameSpeed", "SpeedTimer",
-     "GrimBypass", "VulcanBypass", "MatrixBypass",
-    "AACBypass", "VerusDisabler", "IntaveBypass", "WatchdogBypass",
-    "PacketMine", "PacketWalk", "PacketSneak", "PacketCancel", "PacketDupe", "PacketSpam",
-    "SelfDestruct", "HideClient",
-    "SessionStealer", "TokenLogger", "TokenGrabber", "DiscordToken",
-    "RemoteAccess", "ReverseShell", "C2Server", "Backdoor", "KeyLogger",
-    "StashFinder", "TrailFinder",
-    "imgui.binding",
-    "JNativeHook", "GlobalScreen", "NativeKeyListener",
-    "client-refmap.json", "cheat-refmap.json",
-    "aHR0cDovL2FwaS5ub3ZhY2xpZW50LmxvbC93ZWJob29rLnR4dA==",
-    "meteordevelopment", "cc/novoline",
-    "com/alan/clients", "club/maxstats", "wtf/moonlight",
-    "me/zeroeightsix/kami", "net/ccbluex", "today/opai",
-    "net/minecraft/injection", "org/chainlibs/module/impl/modules",
-    "xyz/greaj", "com/cheatbreaker", "com/moonsworth",
-    "doomsdayclient", "DoomsdayClient", "doomsday.jar",
-    "novaclient", "api.novaclient.lol",
-    "WalksyOptimizer", "LWFH Crystal",
-    "vape.gg", "vapeclient", "VapeClient", "VapeLite",
-    "intent.store", "IntentClient",
-    "rise.today", "riseclient.com",
-    "meteor-client", "meteorclient", "meteordevelopment.meteorclient",
-    "liquidbounce", "fdp-client", "net.ccbluex",
-    "novoware", "novoclient",
-    "aristois", "impactclient", "azura",
-    "pandaware", "skilled", "moonClient", "astolfo",
-    "futureClient", "konas", "rusherhack", "inertia", "exhibition",
-    # Additional detection strings from user list:
-    "ahc.class", "triggerbot", "killaura", "selfdestruct", "strafe", "pingspoof",
-    "meteorclient", "prestige", "s3lfd3struct", "playerreach", "jumpreset", "fakelag",
-    "autoclick", "doomsdayclient.com", "hotbarswap", "switchdelay", "switch_delay_ms",
-    "swapBackToOriginalSlot", "attackRegisteredThisClick", "findKnockbackSword", "lvstrng",
-    "safe anchor", "safe_anchor", "auto crystal", "anchor macro", "auto totem", "autototem",
-    "auto_hit_crystal", "auto_inventory_totem", "auto_crystal", "auto_crystal_v2",
-    "auto_crystal_helper", "crystal_auto", "crystal_aura", "crystal_aura_plus",
-    "crystal_bot", "crystal_assist", "anchor_macro_v2", "anchor_macro_v3",
-    "anchor_macro_2", "safe_anchor_plus", "auto_anchor_v2", "auto_anchor_plus",
-    "auto_hit_crystal_v2", "auto_hit_crystal_plus", "crystal_switch", "crystal_manager",
-    "EndCrystalItemMixin", "isDeadBodyNearby",
-    "POT_CHEATS", "getBlockBreakingCooldown", "Anch0r Macr0", "Aut0H1tCryst4l",
-    "L3g1t R3t0t3m", "Anchor_Macro", "Auto_crystal", "hookCancelBlockBreaking",
-    "canPlaceCrystalServer", "onSwapLastAttackedTicksReset", "redirectSelectedSlot",
-    "getHandSwingDuration", "onBeginRenderTick", "PlayerMoveC2SPacketAccessor",
-    "clickSimulation", "switchDelay", "switchChance", "placeChance", "glowstoneDelay",
-    "glowstoneChance", "explodeDelay", "explodeChance", "explodeSlot", "antiWeakness",
-    "damageTick", "breakChance", "breakDelay", "stopOnCrystal", "processCrystal",
-    "swapToWeapon", "isObsidianOrBedrock", "isValidCrystalPosition", "processAnchorPvP",
-    "isValidAnchorPosition", "AutoCrystal", "autocrystal", "auto crystal", "AutoHitCrystal",
-    "autohitcrystal", "dontPlaceCrystal", "dontBreakCrystal", "autoCrystalPlaceClock",
-    "AutoAnchor", "autoanchor", "auto anchor", "DoubleAnchor", "safe anchor", "safeanchor",
-    "anchortweaks", "anchor macro", "AutoTotem", "autototem", "auto totem", "InventoryTotem",
-    "inventorytotem", "HoverTotem", "hover totem", "legittotem", "AutoPot", "autopot",
-    "auto pot", "speedPotSlot", "strengthPotSlot", "AutoArmor", "autoarmor", "auto armor",
-    "preventSwordBlockBreaking", "preventSwordBlockAttack", "AutoDoubleHand", "autodoublehand",
-    "auto double hand", "AutoClicker", "AimAssist", "aimassist", "aim assist", "trigger bot",
-    "shieldbreaker", "shield breaker", "axespam", "axe spam", "FakeLag", "ping spoof",
-    "FakeInv", "pushOutOfBlocks", "onPushOutOfBlocks", "webmacro", "web macro", "JumpReset",
-    "setBlockBreakingCooldown", "setItemUseCooldown", "onBlockBreaking", "invokeDoAttack",
-    "invokeDoItemUse", "setSelectedSlot", "getSelectedSlot", "blockBreakingCooldown",
-    "invokeOnMouseButton", "getVisualAttackCooldownProgressPerTick", "endcrystalitemmixin",
-    "WalksyCrystalOptimizerMod", "arrayOfString", "StringObfuscator", "onShouldRenderBlockOutline",
-    "predictCrystals", "noOffhandTotem", "getNearByCrystals", "slotExplode", "needToPlaceRails",
-    "findTotemSlot", "activateOnRightClick", "crystalPlaceClock", "CrystalTwiceClock",
-    "mainHandStack", "attackInAir", "attackOnJump", "onDestruct", "getGlowstoneChance",
-    "isAutoCharge", "getPlaceChance", "getSwitchDelay", "getGlowstoneDelay", "getExplodeDelay",
-    "getExplodeSlotIndex", "getPlaceDelayTicks", "getBreakDelayTicks", "isSpawnersEnabled",
-    "isShulkersEnabled", "onModuleDisabled", "switchToBestTool", "switchToBestWeapon",
-    "isLootProtect", "getMinHunger", "isTracersEnabled", "getSelectedBlocks", "isChestsEnabled",
-    "inventoryToMenuSlot", "throwPearl", "isLeftHoldOnly",
-    "Automatically switches to sword when hitting with totem",
-    "Failed to switch to mace after axe!", "Breaking shield with axe...", "TrilliumSolutions",
-    "self destruct", "ＡｕｔｏＣｒｙｓｔａｌ", "Ａｕｔｏ Ｃｒｙｓｔａｌ", "ＡｕｔｏＨｉｔＣｒｙｓｔａｌ", "Ａ．ｕｔｏ Ｃｒｙｓｔａｌ",
-    "Ａ．ｕｔｏＣｒｙｓｔａｌＬＶ２", "Ａ．ｕｔｏ Ｈｉｔ Ｃｒｙｓｔａｌ", "ＡｕｔｏＡｎｃｈｏｒ", "Ａｕｔｏ Ａｎｃｈｏｒ",
-    "ＤｏｕｂｌｅＡｎｃｈｏｒ", "Ｄｏｕｂｌｅ Ａｎｃｈｏｒ", "ＳａｆｅＡｎｃｈｏｒ", "Ｓａｆｅ Ａｎｃｈｏｒ",
-    "Ａｎｃｈｏｒ Ｍａｃｒｏ", "Ａ．ｎｃｈｏｒ Ｍａｃｒｏ", "Ａ．ｎｃｈｏｒ Ｍａｃｒｏ Ｖ２", "Ｄ．ｏｕｂｌｅ Ａｎｃｈｏｒ",
-    "Ｓ．ａｆｅＡｎｃｈｏｒ", "ＡｕｔｏＴｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ Ｈｉｔ",
-    "Ａ．ｕｔｏ Ｔｏｔｅｍ Ｈｉｔ", "ＨｏｖｅｒＴｏｔｅｍ", "Ｈｏｖｅｒ Ｔｏｔｅｍ", "ＩｎｖｅｎｔｏｒｙＴｏｔｅｍ",
-    "Ｈ．ｏｖｅｒ Ｔｏｔｅｍ", "Ａ．ｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ", "Ｆ．ｏｒｃｅ Ｔｏｔｅｍ", "Ｔ．ｏｔｅｍ Ｆｉｒｓｔ",
-    "Ｔ．ｏｔｅｍ Ｏｆｆｈａｎｄ", "Ｔ．ｏｔｅｍ Ｓｌｏｔ", "Ｈ．ｏｖｅｒ", "Ｗ．ｏｒｋ Ｗｉｔｈ Ｔｏｔｅｍ",
-    "ＡｕｔｏＤｏｕｂｌｅＨａｎｄ", "Ａｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ", "Ａ．ｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ",
-    "Ａ．ｃｔｉｖａｔｅ Ｋｅｙ", "Ｗ．ｈｉｌｅ Ｕｓｅ", "Ｓ．ｔｏｐ ｏｎ Ｋｉｌｌ",
-    "Ｃ．ｌｉｃｋ Ｓｉｍｕｌａｔｉｏｎ", "Ｓ．ｗｉｔｃｈ Ｄｅｌａｙ", "Ｓ．ｗｔｃｈ Ｃｈａｎｃｅ",
-    "Ｐ．ｌａｃｅ Ｃｈａｎｃｅ", "Ｇ．ｌｏｗｓｔｏｎｅ Ｄｅｌａｙ", "Ｇ．ｌｏｗｓｔｏｎｅ Ｃｈａｎｃｅ",
-    "Ｅ．ｘｐｌｏｄｅ Ｄｅｌａｙ", "Ｅ．ｘｐｌｏｄｅ Ｃｈａｎｃｅ", "Ｅ．ｘｐｌｏｄｅ Ｓｌｏｔ",
-    "Ｏ．ｎｌｙ Ｏｗｎ", "Ｏ．ｎｌｙ Ｃｈａｒｇｅ", "Ｒ．ａｎｄｏｍ Ｇｌｏｗｓｔｏｎｅ",
-    "7hr0w P0t", "Aut0 Jump R3s3t", "4ut0 Jump r3s3t", "tr1gg3rb0t", "trigg3rb0t",
-    "D0uble4nch0r", "D0ubl34nch0r", "4nch0rM4cr0", "Anch0rMacr0", "Anc0rM4cr0",
-    "M4c3 Sw4p", "Mac3 Sw4p", "тriggerbot", "tr​iggerbot", "ｔｒｉｇｇｅｒｂｏｔ", "кillaura",
-    "ki​llaura", "ｋｉｌｌａｕｒａ", "ѕelfdеstruct", "ｓｅｌｆｄｅｓｔｒｕｃｔ", "ｓｔｒａｆｅ", "ａｉｍａｓｓｉｓｔ",
-    "ａｉｍａｓｓｉｓｔ", "ａｉｍ ａｓｓｉｓｔ", "ａｉｍ ａｓｓｉｓｔ", "playerreach", "jumрreset",
-    "ｊｕｍｐｒｅｓｅｔ", "ｊｕｍｐｒｅｓｅｔ", "ｆａｋｅｌａｇ", "autосlick", "ａｕｔｏｃｌｉｃｋ",
-    "ａｕｔｏ ｃｌｉｃｋ", "hotbаrswap", "ｈｏｔｂａｒｓｗａｐ", "swіtchDеlаy", "ｓｗｉｔｃｈＤｅｌａｙ",
-    "switch_delay_ms", "swapBackToOriginalSlot", "attackRegisteredThisClick", "findKnockbackSword",
-    "lvstrng", "safe anchor", "safe_anchor", "ｓａｆｅ ａｎｃｈｏｒ", "auto crystal",
-    "ａｕｔｏ ｃｒｙｓｔａｌ", "anchor macro", "ａｎｃｈｏｒ ｍａｃｒｏ", "auto totem", "ａｕｔｏ ｔｏｔｅｍ",
-    "autototem", "ａｕｔｏｔｏｔｅｍ", "auto_hit_crystal", "auto_inventory_totem", "EndCrystalItemMixin",
-    "isDeadBodyNearby", "POT_CHEATS", "getBlockBreakingCooldown", "Anch0r Macr0", "Aut0H1tCryst4l",
-    "L3g1t R3t0t3m", "Anchor_Macro", "Auto_crystal", "hookCancelBlockBreaking",
-    "canPlaceCrystalServer", "onSwapLastAttackedTicksReset", "redirectSelectedSlot",
-    "getHandSwingDuration", "onBeginRenderTick", "PlayerMoveC2SPacketAccessor", "clickSimulation",
-    "switchDelay", "switchChance", "placeChance", "glowstoneDelay", "glowstoneChance",
-    "explodeDelay", "explodeChance", "explodeSlot", "antiWeakness", "damageTick", "breakChance",
-    "breakDelay", "stopOnCrystal", "processCrystal", "swapToWeapon", "isObsidianOrBedrock",
-    "isValidCrystalPosition", "processAnchorPvP", "isValidAnchorPosition", "AutoCrystal",
-    "autocrystal", "auto crystal", "AutoHitCrystal", "autohitcrystal", "dontPlaceCrystal",
-    "dontBreakCrystal", "canPlaceCrystalServer", "autoCrystalPlaceClock", "AutoAnchor", "autoanchor",
-    "auto anchor", "DoubleAnchor", "safe anchor", "safeanchor", "anchortweaks", "anchor macro",
-    "AutoTotem", "autototem", "auto totem", "InventoryTotem", "inventorytotem", "HoverTotem",
-    "hover totem", "legittotem", "AutoPot", "autopot", "auto pot", "speedPotSlot",
-    "strengthPotSlot", "AutoArmor", "autoarmor", "auto armor", "preventSwordBlockBreaking",
-    "preventSwordBlockAttack", "AutoDoubleHand", "autodoublehand", "auto double hand",
-    "AutoClicker", "AimAssist", "aimassist", "aim assist", "trigger bot", "shieldbreaker",
-    "shield breaker", "axespam", "axe spam", "FakeLag", "ping spoof", "FakeInv",
-    "pushOutOfBlocks", "onPushOutOfBlocks", "webmacro", "web macro", "JumpReset",
-    "setBlockBreakingCooldown", "setItemUseCooldown", "onBlockBreaking", "invokeDoAttack",
-    "invokeDoItemUse", "setSelectedSlot", "getSelectedSlot", "blockBreakingCooldown",
-    "invokeOnMouseButton", "onSwapLastAttackedTicksReset", "getVisualAttackCooldownProgressPerTick",
-    "getHandSwingDuration", "onBeginRenderTick", "PlayerMoveC2SPacketAccessor", "redirectSelectedSlot",
-    "hookCancelBlockBreaking", "EndCrystalItemMixin", "endcrystalitemmixin", "WalksyCrystalOptimizerMod",
-    "arrayOfString", "dqrkis", "StringObfuscator", "POT_CHEATS", "onShouldRenderBlockOutline",
-    "predictCrystals", "noOffhandTotem", "getNearByCrystals", "slotExplode", "needToPlaceRails",
-    "findTotemSlot", "activateOnRightClick", "crystalPlaceClock", "isDeadBodyNearby",
-    "CrystalTwiceClock", "mainHandStack", "attackInAir", "attackOnJump", "onDestruct",
-    "getGlowstoneChance", "isAutoCharge", "getPlaceChance", "getSwitchDelay", "getGlowstoneDelay",
-    "getExplodeDelay", "getExplodeSlotIndex", "getPlaceDelayTicks", "getBreakDelayTicks",
-    "isSpawnersEnabled", "isShulkersEnabled", "onModuleDisabled", "switchToBestTool",
-    "switchToBestWeapon", "isLootProtect", "getMinHunger", "isTracersEnabled", "getSelectedBlocks",
-    "isChestsEnabled", "inventoryToMenuSlot", "throwPearl", "isLeftHoldOnly",
-    "Automatically switches to sword when hitting with totem",
-    "Failed to switch to mace after axe!", "Breaking shield with axe...", "TrilliumSolutions",
-    "self destruct", "ＡｕｔｏＣｒｙｓｔａｌ", "Ａｕｔｏ Ｃｒｙｓｔａｌ", "ＡｕｔｏＨｉｔＣｒｙｓｔａｌ", "Ａ．ｕｔｏ Ｃｒｙｓｔａｌ",
-    "Ａ．ｕｔｏＣｒｙｓｔａｌＬＶ２", "Ａ．ｕｔｏ Ｈｉｔ Ｃｒｙｓｔａｌ", "ＡｕｔｏＡｎｃｈｏｒ", "Ａｕｔｏ Ａｎｃｈｏｒ",
-    "ＤｏｕｂｌｅＡｎｃｈｏｒ", "Ｄｏｕｂｌｅ Ａｎｃｈｏｒ", "ＳａｆｅＡｎｃｈｏｒ", "Ｓａｆｅ Ａｎｃｈｏｒ",
-    "Ａｎｃｈｏｒ Ｍａｃｒｏ", "Ａ．ｎｃｈｏｒ Ｍａｃｒｏ", "Ａ．ｎｃｈｏｒ Ｍａｃｒｏ Ｖ２", "Ｄ．ｏｕｂｌｅ Ａｎｃｈｏｒ",
-    "Ｓ．ａｆｅＡｎｃｈｏｒ", "ＡｕｔｏＴｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ Ｈｉｔ",
-    "Ａ．ｕｔｏ Ｔｏｔｅｍ Ｈｉｔ", "ＨｏｖｅｒＴｏｔｅｍ", "Ｈｏｖｅｒ Ｔｏｔｅｍ", "ＩｎｖｅｎｔｏｒｙＴｏｔｅｍ",
-    "Ｈ．ｏｖｅｒ Ｔｏｔｅｍ", "Ａ．ｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ", "Ｆ．ｏｒｃｅ Ｔｏｔｅｍ", "Ｔ．ｏｔｅｍ Ｆｉｒｓｔ",
-    "Ｔ．ｏｔｅｍ Ｏｆｆｈａｎｄ", "Ｔ．ｏｔｅｍ Ｓｌｏｔ", "Ｈ．ｏｖｅｒ", "Ｗ．ｏｒｋ Ｗｉｔｈ Ｔｏｔｅｍ",
-    "ＡｕｔｏＤｏｕｂｌｅＨａｎｄ", "Ａｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ", "Ａ．ｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ",
-    "Ａ．ｃｔｉｖａｔｅ Ｋｅｙ", "Ｗ．ｈｉｌｅ Ｕｓｅ", "Ｓ．ｔｏｐ ｏｎ Ｋｉｌｌ",
-    "Ｃ．ｌｉｃｋ Ｓｉｍｕｌａｔｉｏｎ", "Ｓ．ｗｉｔｃｈ Ｄｅｌａｙ", "Ｓ．ｗｔｃｈ Ｃｈａｎｃｅ",
-    "Ｐ．ｌａｃｅ Ｃｈａｎｃｅ", "Ｇ．ｌｏｗｓｔｏｎｅ Ｄｅｌａｙ", "Ｇ．ｌｏｗｓｔｏｎｅ Ｃｈａｎｃｅ",
-    "Ｅ．ｘｐｌｏｄｅ Ｄｅｌａｙ", "Ｅ．ｘｐｌｏｄｅ Ｃｈａｎｃｅ", "Ｅ．ｘｐｌｏｄｅ Ｓｌｏｔ",
-    "Ｏ．ｎｌｙ Ｏｗｎ", "Ｏ．ｎｌｙ Ｃｈａｒｇｅ", "Ｒ．ａｎｄｏｍ Ｇｌｏｗｓｔｏｎｅ",
-    "7hr0w P0t", "Aut0 Jump R3s3t", "4ut0 Jump r3s3t", "tr1gg3rb0t", "trigg3rb0t",
-    "D0uble4nch0r", "D0ubl34nch0r", "4nch0rM4cr0", "Anch0rMacr0", "Anc0rM4cr0",
-    "M4c3 Sw4p", "Mac3 Sw4p", "тriggerbot", "tr​iggerbot", "ｔｒｉｇｇｅｒｂｏｔ", "кillaura",
-    "ki​llaura", "ｋｉｌｌａｕｒａ", "ѕelfdеstruct", "ｓｅｌｆｄｅｓｔｒｕｃｔ", "ｓｔｒａｆｅ", "ａｉｍａｓｓｉｓｔ",
-    "ａｉｍａｓｓｉｓｔ", "ａｉｍ ａｓｓｉｓｔ", "ｐｌａｙｅｒｒｅａｃｈ", "jumрreset", "ｊｕｍｐｒｅｓｅｔ",
-    "ｆａｋｅｌａｇ", "autосlick", "ａｕｔｏｃｌｉｃｋ", "ａｕｔｏ ｃｌｉｃｋ", "hotbаrswap",
-    "ｈｏｔｂａｒｓｗａｐ", "swіtchDеlаy", "ｓｗｉｔｃｈＤｅｌａｙ", "switch_delay_ms",
-    "swapBackToOriginalSlot", "attackRegisteredThisClick", "findKnockbackSword", "lvstrng",
-    "safe anchor", "safe_anchor", "ｓａｆｅ ａｎｃｈｏｒ", "auto crystal", "ａｕｔｏ ｃｒｙｓｔａｌ",
-    "anchor macro", "ａｎｃｈｏｒ ｍａｃｒｏ", "auto totem", "ａｕｔｏ ｔｏｔｅｍ", "autototem",
-    "ａｕｔｏｔｏtｅｍ", "auto_hit_crystal", "auto_inventory_totem", "EndCrystalItemMixin",
-    "isDeadBodyNearby", "POT_CHEATS", "getBlockBreakingCooldown", "Anch0r Macr0", "Aut0H1tCryst4l",
-    "L3g1t R3t0t3m", "Anchor_Macro", "Auto_crystal", "hookCancelBlockBreaking",
-    "canPlaceCrystalServer", "onSwapLastAttackedTicksReset", "redirectSelectedSlot",
-    "getHandSwingDuration", "onBeginRenderTick", "PlayerMoveC2SPacketAccessor", "clickSimulation",
-    "switchDelay", "switchChance", "placeChance", "glowstoneDelay", "glowstoneChance",
-    "explodeDelay", "explodeChance", "explodeSlot", "antiWeakness", "damageTick", "breakChance",
-    "breakDelay", "stopOnCrystal", "processCrystal", "swapToWeapon", "isObsidianOrBedrock",
-    "isValidCrystalPosition", "processAnchorPvP", "isValidAnchorPosition", "AutoCrystal",
-    "autocrystal", "auto crystal", "AutoHitCrystal", "autohitcrystal", "dontPlaceCrystal",
-    "dontBreakCrystal", "canPlaceCrystalServer", "autoCrystalPlaceClock", "AutoAnchor", "autoanchor",
-    "auto anchor", "DoubleAnchor", "safe anchor", "safeanchor", "anchortweaks", "anchor macro",
-    "AutoTotem", "autototem", "auto totem", "InventoryTotem", "inventorytotem", "HoverTotem",
-    "hover totem", "legittotem", "AutoPot", "autopot", "auto pot", "speedPotSlot",
-    "strengthPotSlot", "AutoArmor", "autoarmor", "auto armor", "preventSwordBlockBreaking",
-    "preventSwordBlockAttack", "AutoDoubleHand", "autodoublehand", "auto double hand",
-    "AutoClicker", "AimAssist", "aimassist", "aim assist", "trigger bot", "shieldbreaker",
-    "shield breaker", "axespam", "axe spam", "FakeLag", "ping spoof", "FakeInv",
-    "pushOutOfBlocks", "onPushOutOfBlocks", "webmacro", "web macro", "JumpReset",
-    "setBlockBreakingCooldown", "setItemUseCooldown", "onBlockBreaking", "invokeDoAttack",
-    "invokeDoItemUse", "setSelectedSlot", "getSelectedSlot", "blockBreakingCooldown",
-    "invokeOnMouseButton", "onSwapLastAttackedTicksReset", "getVisualAttackCooldownProgressPerTick",
-    "getHandSwingDuration", "onBeginRenderTick", "PlayerMoveC2SPacketAccessor", "redirectSelectedSlot",
-    "hookCancelBlockBreaking", "EndCrystalItemMixin", "endcrystalitemmixin", "WalksyCrystalOptimizerMod",
-    "arrayOfString", "dqrkis", "StringObfuscator", "POT_CHEATS", "onShouldRenderBlockOutline",
-    "predictCrystals", "noOffhandTotem", "getNearByCrystals", "slotExplode", "needToPlaceRails",
-    "findTotemSlot", "activateOnRightClick", "crystalPlaceClock", "isDeadBodyNearby",
-    "CrystalTwiceClock", "mainHandStack", "attackInAir", "attackOnJump", "onDestruct",
-    "getGlowstoneChance", "isAutoCharge", "getPlaceChance", "getSwitchDelay", "getGlowstoneDelay",
-    "getExplodeDelay", "getExplodeSlotIndex", "getPlaceDelayTicks", "getBreakDelayTicks",
-    "isSpawnersEnabled", "isShulkersEnabled", "onModuleDisabled", "switchToBestTool",
-    "switchToBestWeapon", "isLootProtect", "getMinHunger", "isTracersEnabled", "getSelectedBlocks",
-    "isChestsEnabled", "inventoryToMenuSlot", "throwPearl", "isLeftHoldOnly",
-    "Automatically switches to sword when hitting with totem",
-    "Failed to switch to mace after axe!", "Breaking shield with axe...", "TrilliumSolutions",
-    "self destruct", "ＡｕｔｏＣｒｙｓｔａｌ", "Ａｕｔｏ Ｃｒｙｓｔａｌ", "ＡｕｔｏＨｉｔＣｒｙｓｔａｌ", "Ａ．ｕｔｏ Ｃｒｙｓｔａｌ",
-    "Ａ．ｕｔｏＣｒｙｓｔａｌＬＶ２", "Ａ．ｕｔｏ Ｈｉｔ Ｃｒｙｓｔａｌ", "ＡｕｔｏＡｎｃｈｏｒ", "Ａｕｔｏ Ａｎｃｈｏｒ",
-    "ＤｏｕｂｌｅＡｎｃｈｏｒ", "Ｄｏｕｂｌｅ Ａｎｃｈｏｒ", "ＳａｆｅＡｎｃｈｏｒ", "Ｓａｆｅ Ａｎｃｈｏｒ",
-    "Ａｎｃｈｏｒ Ｍａｃｒｏ", "Ａ．ｎｃｈｏｒ Ｍａｃｒｏ", "Ａ．ｎｃｈｏｒ Ｍａｃｒｏ Ｖ２", "Ｄ．ｏｕｂｌｅ Ａｎｃｈｏｒ",
-    "Ｓ．ａｆｅＡｎｃｈｏｒ", "ＡｕｔｏＴｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ", "Ａｕｔｏ Ｔｏｔｅｍ Ｈｉｔ",
-    "Ａ．ｕｔｏ Ｔｏｔｅｍ Ｈｉｔ", "ＨｏｖｅｒＴｏｔｅｍ", "Ｈｏｖｅｒ Ｔｏｔｅｍ", "ＩｎｖｅｎｔｏｒｙＴｏｔｅｍ",
-    "Ｈ．ｏｖｅｒ Ｔｏｔｅｍ", "Ａ．ｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ", "Ｆ．ｏｒｃｅ Ｔｏｔｅｍ", "Ｔ．ｏｔｅｍ Ｆｉｒｓｔ",
-    "Ｔ．ｏｔｅｍ Ｏｆｆｈａｎｄ", "Ｔ．ｏｔｅｍ Ｓｌｏｔ", "Ｈ．ｏｖｅｒ", "Ｗ．ｏｒｋ Ｗｉｔｈ Ｔｏｔｅｍ",
-    "ＡｕｔｏＤｏｕｂｌｅＨａｎｄ", "Ａｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ", "Ａ．ｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ",
-    "Ａ．ｃｔｉｖａｔｅ Ｋｅｙ", "Ｗ．ｈｉｌｅ Ｕｓｅ", "Ｓ．ｔｏｐ ｏｎ Ｋｉｌｌ",
-    "Ｃ．ｌｉｃｋ Ｓｉｍｕｌａｔｉｏｎ", "Ｓ．ｗｉｔｃｈ Ｄｅｌａｙ", "Ｓ．ｗｔｃｈ Ｃｈａｎｃｅ",
-    "Ｐ．ｌａｃｅ Ｃｈａｎｃｅ", "Ｇ．ｌｏｗｓｔｏｎｅ Ｄｅｌａｙ", "Ｇ．ｌｏｗｓｔｏｎｅ Ｃｈａｎｃｅ",
-    "Ｅ．ｘｐｌｏｄｅ Ｄｅｌａｙ", "Ｅ．ｘｐｌｏｄｅ Ｃｈａｎｃｅ", "Ｅ．ｘｐｌｏｄｅ Ｓｌｏｔ",
-    "Ｏ．ｎｌｙ Ｏｗｎ", "Ｏ．ｎｌｙ Ｃｈａｒｇｅ", "Ｒ．ａｎｄｏｍ Ｇｌｏｗｓｔｏｎｅ",
-    "7hr0w P0t", "Aut0 Jump R3s3t", "4ut0 Jump r3s3t", "tr1gg3rb0t", "trigg3rb0t",
-    "D0uble4nch0r", "D0ubl34nch0r", "4nch0rM4cr0", "Anch0rMacr0", "Anc0rM4cr0",
-    "M4c3 Sw4p", "Mac3 Sw4p", "ｔｒｉｇｇｅｒｂｏｔ", "ｋｉｌｌａｕｒａ", "ｓｅｌｆｄｅｓｔｒｕｃｔ", "ｓｔｒａｆｅ",
-    "ａｉｍａｓｓｉｓｔ", "ａｕｔｏｃｌｉｃｋ", "ｈｏｔｂａｒｓｗａｐ", "ｓｗｉｔｃｈＤｅｌａｙ"
+    'AutoCrystal',
+    'autocrystal',
+    'auto crystal',
+    'auto.crystal',
+    'auto!crystal',
+    'auto?crystal',
+    'auto-crystal',
+    'cw crystal',
+    'Auto.Crystal',
+    'Auto!Crystal',
+    'Auto?Crystal',
+    'Auto-Crystal',
+    'dontPlaceCrystal',
+    'dontBreakCrystal',
+    'AutoHitCrystal',
+    'autohitcrystal',
+    'canPlaceCrystalServer',
+    'healPotSlot',
+    'ＡｕｔｏＣｒｙｓｔａｌ',
+    'Ａｕｔｏ Ｃｒｙｓｔａｌ',
+    'ＡｕｔｏＨｉｔＣｒｙｓｔａｌ',
+    'AutoAnchor',
+    'autoanchor',
+    'auto anchor',
+    'DoubleAnchor',
+    'HasAnchor',
+    'anchortweaks',
+    'anchor macro',
+    'safe anchor',
+    'safeanchor',
+    'SafeAnchor',
+    'AirAnchor',
+    'ＡｕｔｏＡｎｃｈｏｒ',
+    'Ａｕｔｏ Ａｎｃｈｏｒ',
+    'ＤｏｕｂｌｅＡｎｃｈｏｒ',
+    'Ｄｏｕｂｌｅ Ａｎｃｈｏｒ',
+    'ＳａｆｅＡｎｃｈｏｒ',
+    'Ｓａｆｅ Ａｎｃｈｏｒ',
+    'Ａｎｃｈｏｒ Ｍａｃｒｏ',
+    'anchorMacro',
+    'Auto_Crystal',
+    'auto_Crystal',
+    'Auto_crystal',
+    'auto_crystal',
+    'Auto_Crystal_v2',
+    'auto_Crystal_v2',
+    'Auto_crystal_v2',
+    'auto_crystal_v2',
+    'Auto_Crystal_Plus',
+    'auto_Crystal_Plus',
+    'Auto_crystal_Plus',
+    'auto_crystal_Plus',
+    'Auto_Crystal_Pro',
+    'auto_Crystal_Pro',
+    'Auto_crystal_Pro',
+    'auto_crystal_Pro',
+    'Auto_Hit_Crystal',
+    'auto_Hit_Crystal',
+    'Auto_hit_Crystal',
+    'auto_hit_Crystal',
+    'Auto_HitCrystal',
+    'auto_HitCrystal',
+    'Auto_hitCrystal',
+    'auto_hitCrystal',
+    'Auto_Anchor',
+    'auto_Anchor',
+    'Auto_anchor',
+    'auto_anchor',
+    'Double_Anchor',
+    'double_Anchor',
+    'Double_anchor',
+    'double_anchor',
+    'Anchor_Macro',
+    'anchor_Macro',
+    'Anchor_macro',
+    'anchor_macro',
+    'Safe_Anchor',
+    'safe_Anchor',
+    'Safe_anchor',
+    'safe_anchor',
+    'Air_Anchor',
+    'air_Anchor',
+    'Air_anchor',
+    'air_anchor',
+    'Has_Anchor',
+    'has_Anchor',
+    'Has_anchor',
+    'has_anchor',
+    'Anchor_Tweaks',
+    'anchor_Tweaks',
+    'Anchor_tweaks',
+    'anchor_tweaks',
+    'Safe_Anchor_Plus',
+    'safe_Anchor_Plus',
+    'Safe_anchor_Plus',
+    'safe_anchor_Plus',
+    'Double_Anchor_2',
+    'double_Anchor_2',
+    'Double_anchor_2',
+    'double_anchor_2',
+    'Anchor_Macro_2',
+    'anchor_Macro_2',
+    'Anchor_macro_2',
+    'anchor_macro_2',
+    'Auto_Anchor_Plus',
+    'auto_Anchor_Plus',
+    'Auto_anchor_Plus',
+    'auto_anchor_Plus',
+    'Air_Anchor_Plus',
+    'air_Anchor_Plus',
+    'Air_anchor_Plus',
+    'air_anchor_Plus',
+    'AnchorMacro_2',
+    'anchorMacro_2',
+    'Anchor_Macro_v2',
+    'anchor_Macro_v2',
+    'Anchor_macro_v2',
+    'anchor_macro_v2',
+    'Auto_anchor_v2',
+    'auto_anchor_v2',
+    'Auto_Crystal_Alt',
+    'auto_Crystal_Alt',
+    'Auto_crystal_Alt',
+    'auto_crystal_Alt',
+    'Crystal_Auto',
+    'crystal_Auto',
+    'Crystal_auto',
+    'crystal_auto',
+    'Anchor_Safe',
+    'anchor_Safe',
+    'Anchor_safe',
+    'anchor_safe',
+    'Anchor_Pro',
+    'anchor_Pro',
+    'Anchor_pro',
+    'anchor_pro',
+    'Auto_Anchor_Alt',
+    'auto_Anchor_Alt',
+    'Auto_anchor_Alt',
+    'auto_anchor_Alt',
+    'AutoTotem',
+    'autototem',
+    'auto totem',
+    'Auto_Totem',
+    'auto_Totem',
+    'auto_totem',
+    'InventoryTotem',
+    'inventorytotem',
+    'HoverTotem',
+    'hover totem',
+    'Hover_Totem',
+    'hover_Totem',
+    'hover_totem',
+    'legittotem',
+    'ＡｕｔｏＴｏｔｅｍ',
+    'Ａｕｔｏ Ｔｏｔｅｍ',
+    'ＨｏｖｅｒＴｏｔｅｍ',
+    'Ｈｏｖｅｒ Ｔｏｔｅｍ',
+    'ＩｎｖｅｎｔｏｒｙＴｏｔｅｍ',
+    'Ａｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ',
+    'Ａｕｔｏ Ｔｏｔｅｍ Ｈｉｔ',
+    'AutoTotem_Hit',
+    'autoTotem_Hit',
+    'auto_totem_hit',
+    'Auto_Totem_Hit',
+    'auto_Totem_Hit',
+    'AutoPot',
+    'autopot',
+    'auto pot',
+    'Auto_pot',
+    'auto_pot',
+    'Auto_Pot',
+    'AUTO_POT',
+    'Auto_Pot_Refill',
+    'auto_Pot_Refill',
+    'auto_pot_refill',
+    'Auto_pot_refill',
+    'AUTO_POT_REFILL',
+    'Auto_Pot_Hit',
+    'auto_Pot_Hit',
+    'auto_pot_hit',
+    'Auto_pot_hit',
+    'AUTO_POT_HIT',
+    'Auto_Pot_Slot',
+    'auto_Pot_Slot',
+    'auto_pot_slot',
+    'Auto_pot_slot',
+    'AUTO_POT_SLOT',
+    'Auto_Pot_Use',
+    'auto_Pot_Use',
+    'auto_pot_use',
+    'Auto_pot_use',
+    'AUTO_POT_USE',
+    'Auto_Pot_Auto',
+    'auto_Pot_Auto',
+    'auto_pot_auto',
+    'Auto_pot_auto',
+    'AUTO_POT_AUTO',
+    'Auto_Pot_Bot',
+    'auto_Pot_Bot',
+    'auto_pot_bot',
+    'Auto_pot_bot',
+    'AUTO_POT_BOT',
+    'AutoArmor',
+    'autoarmor',
+    'auto armor',
+    'Auto_Armor',
+    'auto_Armor',
+    'auto_armor',
+    'Auto_armor',
+    'AUTO_ARMOR',
+    'Auto_Armor_Equip',
+    'auto_Armor_Equip',
+    'auto_armor_equip',
+    'Auto_armor_equip',
+    'AUTO_ARMOR_EQUIP',
+    'Auto_Armor_Swap',
+    'auto_Armor_Swap',
+    'auto_armor_swap',
+    'Auto_armor_swap',
+    'AUTO_ARMOR_SWAP',
+    'Auto_Armor_Set',
+    'auto_Armor_Set',
+    'auto_armor_set',
+    'Auto_armor_set',
+    'AUTO_ARMOR_SET',
+    'Auto_Armor_Bot',
+    'auto_Armor_Bot',
+    'auto_armor_bot',
+    'Auto_armor_bot',
+    'AUTO_ARMOR_BOT',
+    'AUTO_CRYSTAL',
+    'auto_crystal_alt',
+    'Auto_crystal_alt',
+    'AUTO_CRYSTAL_ALT',
+    'Auto_Crystal_Bot',
+    'auto_Crystal_Bot',
+    'auto_crystal_bot',
+    'Auto_crystal_bot',
+    'AUTO_CRYSTAL_BOT',
+    'Auto_Crystal_Assist',
+    'auto_Crystal_Assist',
+    'auto_crystal_assist',
+    'Auto_crystal_assist',
+    'AUTO_CRYSTAL_ASSIST',
+    'Auto_Crystal_Helper',
+    'auto_Crystal_Helper',
+    'auto_crystal_helper',
+    'Auto_crystal_helper',
+    'AUTO_CRYSTAL_HELPER',
+    'AUTO_ANCHOR',
+    'ANCHOR_MACRO',
+    'SAFE_ANCHOR',
+    'DOUBLE_ANCHOR',
+    'AIR_ANCHOR',
+    'HAS_ANCHOR',
+    'Silent Rotations',
+    'SilentRotations',
+    'Silent_Rotations',
+    'silent_Rotations',
+    'silent_rotations',
+    'Silent_rotations',
+    'SILENT_ROTATIONS',
+    'Silent_Rotation',
+    'silent_Rotation',
+    'silent_rotation',
+    'Silent_rotation',
+    'SILENT_ROTATION',
+    'Silent_Rotations_Mode',
+    'silent_Rotations_Mode',
+    'silent_rotations_mode',
+    'Silent_rotations_mode',
+    'SILENT_ROTATIONS_MODE',
+    'Silent_Rotate',
+    'silent_Rotate',
+    'silent_rotate',
+    'Silent_rotate',
+    'SILENT_ROTATE',
+    'ＡｕｔｏＰｏｔ',
+    'Ａｕｔｏ Ｐｏｔ',
+    'Ａｕｔｏ Ｐｏｔ Ｒｅｆｉｌｌ',
+    'AutoPotRefill',
+    'ＡｕｔｏＡｒｍｏｒ',
+    'Ａｕｔｏ Ａｒｍｏｒ',
+    'preventSwordBlockBreaking',
+    'preventSwordBlockAttack',
+    'ShieldDisabler',
+    'ShieldBreaker',
+    'ＳｈｉｅｌｄＤｉｓａｂｌｅｒ',
+    'Ｓｈｉｅｌｄ Ｄｉｓａｂｌｅｒ',
+    'Breaking shield with axe...',
+    'AutoDoubleHand',
+    'autodoublehand',
+    'auto double hand',
+    'ＡｕｔｏＤｏｕｂｌｅＨａｎｄ',
+    'Ａｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ',
+    'AutoClicker',
+    'ＡｕｔｏＣｌｉｃｋｅｒ',
+    'Failed to switch to mace after axe!',
+    'AutoMace',
+    'Auto_Mace',
+    'auto_Mace',
+    'auto_mace',
+    'MaceSwap',
+    'SpearSwap',
+    'ＡｕｔｏＭａｃｅ',
+    'Ａｕｔｏ Ｍａｃｅ',
+    'ＭａｃｅＳｗａｐ',
+    'Ｍａｃｅ Ｓｗａｐ',
+    'Ｓｐｅａｒ Ｓｗａｐ',
+    'Ａｕｔｏｍａｔｉｃａｌｌｙ ａｘｅ ａｎｄ ｍａｃｅ ｓｈｉｅｌｄｅｄ ｐｌａｙｅｒｓ',
+    'Ｓｔｕｎ Ｓｌａｍ',
+    'StunSlam',
+    'Donut',
+    'JumpReset',
+    'axespam',
+    'axe spam',
+    'EndCrystalItemMixin',
+    'findKnockbackSword',
+    'attackRegisteredThisClick',
+    'AimAssist',
+    'aimassist',
+    'aim assist',
+    'Aim_assist',
+    'Aim.assist',
+    'Aim!assist',
+    'Aim?assist',
+    'Aim-assist',
+    'Aim:assist',
+    'Aim/assist',
+    'Aim|assist',
+    'Aim~assist',
+    'Aim*assist',
+    'aim.assist',
+    'aim!assist',
+    'aim?assist',
+    'aim-assist',
+    'aim:assist',
+    'aim/assist',
+    'aim|assist',
+    'aim~assist',
+    'aim*assist',
+    'triggerbot',
+    'trigger bot',
+    'trigger_bot',
+    'Trigger_Bot',
+    'trigger_Bot',
+    'ＡｉｍＡｓｓｉｓｔ',
+    'Ａｉｍ Ａｓｓｉｓｔ',
+    'ＴｒｉｇｇｅｒＢｏｔ',
+    'Ｔｒｉｇｇｅｒ Ｂｏｔ',
+    'Ｓｉｌｅｎｔ Ｒｏｔａｔｉｏｎｓ',
+    'FakeInv',
+    'swapBackToOriginalSlot',
+    'FakeLag',
+    'pingspoof',
+    'ping spoof',
+    'ＦａｋｅＬａｇ',
+    'Ｆａｋｅ Ｌａｇ',
+    'fakePunch',
+    'Fake Punch',
+    'Ｆａｋｅ Ｐｕｎｃｈ',
+    'webmacro',
+    'web macro',
+    'AntiWeb',
+    'AutoWeb',
+    'Anti_trap',
+    'Ａｎｔｉ Ｗｅｂ',
+    'ＡｕｔｏＷｅｂ',
+    'Ｐｌａｃｅｓ Ｗｅｂｓ Ｏｎ Ｅｎｅｍｉｅｓ',
+    'lvstrng',
+    'dqrkis',
+    'selfdestruct',
+    'self destruct',
+    'WalksyCrystalOptimizerMod',
+    'WalksyOptimizer',
+    'WalskyOptimizer',
+    'Ｗａｌｋｓｙ Ｏｐｔｉｍｉｚｅｒ',
+    'autoCrystalPlaceClock',
+    'AutoFirework',
+    'ElytraSwap',
+    'FastXP',
+    'FastExp',
+    'NoJumpDelay',
+    'ＥｌｙｔｒａＳｗａｐ',
+    'Ｅｌｙｔｒａ Ｓｗａｐ',
+    'PackSpoof',
+    'Antiknockback',
+    'catlean',
+    'AuthBypass',
+    'obfuscatedAuth',
+    'LicenseCheckMixin',
+    'BaseFinder',
+    'invsee',
+    'ItemExploit',
+    'FreezePlayer',
+    'Ｆｒｅｅｃａｍ',
+    'Ｍｏｖｅ ｆｒｅｅｌｙ ｔｈｒｏｕｇｈ ｗａｌｌｓ',
+    'Ｎｏ Ｃｌｉｐ',
+    'Ｆｒｅｅｚｅ Ｐｌａｙｅｒ',
+    'LWFH Crystal',
+    'ＬＷＦＨ Ｃｒｙｓｔａｌ',
+    'KeyPearl',
+    'LootYeeter',
+    'ＫｅｙＰｅａｒｌ',
+    'Ｋｅｙ Ｐｅａｒｌ',
+    'Ｌｏｏｔ Ｙｅｅｔｅｒ',
+    'FastPlace',
+    'Ｆａｓｔ Ｐｌａｃｅ',
+    'Ｐｌａｃｅ ｂｌｏｃｋｓ ｆａｓｔｅｒ',
+    'AutoBreach',
+    'Ａｕｔｏ Ｂｒｅａｃｈ',
+    'setBlockBreakingCooldown',
+    'getBlockBreakingCooldown',
+    'blockBreakingCooldown',
+    'onBlockBreaking',
+    'setItemUseCooldown',
+    'setSelectedSlot',
+    'invokeDoAttack',
+    'invokeDoItemUse',
+    'invokeOnMouseButton',
+    'onPushOutOfBlocks',
+    'onIsGlowing',
+    'Automatically switches to sword when hitting with totem',
+    'arrayOfString',
+    'POT_CHEATS',
+    'Dqrkis Client',
+    'Entity.isGlowing',
+    'Activate Key',
+    'Ａｃｔｉｖａｔｅ Ｋｅｙ',
+    'Click Simulation',
+    'Ｃｌｉｃｋ Ｓｉｍｕｌａｔｉｏｎ',
+    'On RMB',
+    'Ｏｎ ＲＭＢ',
+    'No Count Glitch',
+    'Ｎｏ Ｃｏｕｎｔ Ｇｌｉｔｃｈ',
+    'No Bounce',
+    'NoBounce',
+    'Ｎｏ Ｂｏｕｎｃｅ',
+    'ＮｏＢｏｕｎｃｅ',
+    'No_Bounce',
+    'no_Bounce',
+    'no_bounce',
+    'Ｒｅｍｏｖｅｓ ｔｈｅ ｃｒｙｓｔａｌ ｂｏｕｎｃｅ ｂａｎｄ ａｎｉｍａｔｉｏｎ',
+    'Place Delay',
+    'Ｐｌａｃｅ Ｄｅｌａｙ',
+    'Place_Delay',
+    'place_Delay',
+    'place_delay',
+    'Place_delay',
+    'Break Delay',
+    'Ｂｒｅａｋ Ｄｅｌａｙ',
+    'Break_Delay',
+    'break_Delay',
+    'break_delay',
+    'Fast Mode',
+    'Ｆａｓｔ Ｍｏｄｅ',
+    'Place Chance',
+    'Ｐｌａｃｅ Ｃｈａｎｃｅ',
+    'Place_Chance',
+    'place_Chance',
+    'place_change',
+    'Place_change',
+    'Break Chance',
+    'Ｂｒｅａｋ Ｃｈａｎｃｅ',
+    'Break_Chance',
+    'break_Chance',
+    'break_change',
+    'Break_change',
+    'Stop On Kill',
+    'Ｓｔｏｐ Ｏｎ Ｋｉｌｌ',
+    'Stop_On_Kill',
+    'stop_On_Kill',
+    'stop_on_kill',
+    'Stop_on_kill',
+    'Ｄａｍａｇｅ Ｔｉｃｋ',
+    'damagetick',
+    'Damage_Tick',
+    'damage_Tick',
+    'damage_tick',
+    'damage_ticket',
+    'Anti Weakness',
+    'Ａｎｔｉ Ｗｅａｋｎｅｓｓ',
+    'Anti_Weakness',
+    'anti_Weakness',
+    'anti_weakness',
+    'Particle Chance',
+    'Ｐａｒｔｉｃｌｅ Ｃｈａｎｃｅ',
+    'Trigger Key',
+    'Ｔｒｉｇｇｅｒ Ｋｅｙ',
+    'Switch Delay',
+    'Ｓｗｉｔｃｈ Ｄｅｌａｙ',
+    'Switch_Delay',
+    'switch_Delay',
+    'switch_delay',
+    'Totem Slot',
+    'Ｔｏｔｅｍ Ｓｌｏｔ',
+    'Totem_Slot',
+    'totem_Slot',
+    'totem_slot',
+    'Smooth Rotations',
+    'Ｓｍｏｏｔｈ Ｒｏｔａｔｉｏｎｓ',
+    'Rotation Speed',
+    'Ｒｏｔａｔｉｏｎ Ｓｐｅｅｄ',
+    'Rotation_Speed',
+    'rotation_Speed',
+    'rotation_speed',
+    'Use Easing',
+    'Ｕｓｅ Ｅａｓｉｎｇ',
+    'Use_Easing',
+    'use_Easing',
+    'use_easing',
+    'Easing Strength',
+    'Ｅａｓｉｎｇ Ｓｔｒｅｎｇｔｈ',
+    'Easing_Strength',
+    'easing_Strength',
+    'easing_strength',
+    'While Use',
+    'Ｗｈｉｌｅ Ｕｓｅ',
+    'While_Use',
+    'while_Use',
+    'while_use',
+    'Stop on Kill',
+    'Ｓｔｏｐ ｏｎ Ｋｉｌｌ',
+    'Glowstone Delay',
+    'Ｇｌｏｗｓｔｏｎｅ Ｄｅｌａｙ',
+    'Glowstone Chance',
+    'Ｇｌｏｗｓｔｏｎｅ Ｃｈａｎｃｅ',
+    'Explode Delay',
+    'Ｅｘｐｌｏｄｅ Ｄｅｌａｙ',
+    'Explode_Delay',
+    'explode_Delay',
+    'explode_delay',
+    'Explode Chance',
+    'Ｅｘｐｌｏｄｅ Ｃｈａｎｃｅ',
+    'Explode_Chance',
+    'explode_Chance',
+    'explode_chance',
+    'Explode Slot',
+    'Ｅｘｐｌｏｄｅ Ｓｌｏｔ',
+    'Explode_Slot',
+    'explode_Slot',
+    'explode_slot',
+    'Only Charge',
+    'Ｏｎｌｙ Ｃｈａｒｇｅ',
+    'Anchor Macro',
+    'Reach Distance',
+    'Ｒｅａｃｈ Ｄｉｓｔａｎｃｅ',
+    'Min Height',
+    'Ｍｉｎ Ｈｅｉｇｈｔ',
+    'Min Fall Speed',
+    'Ｍｉｎ Ｆａｌｌ Ｓｐｅｅｄ',
+    'Attack Delay',
+    'Ａｔｔａｃｋ Ｄｅｌａｙ',
+    'Breach Delay',
+    'Ｂｒｅａｃｈ Ｄｅｌａｙ',
+    'Require Elytra',
+    'Ｒｅｑｕｉｒｅ Ｅｌｙｔｒａ',
+    'Auto Switch Back',
+    'Ａｕｔｏ Ｓｗｉｔｃｈ Ｂａｃｋ',
+    'Check Line of Sight',
+    'Ｃｈｅｃｋ Ｌｉｎｅ ｏｆ Ｓｉｇｈｔ',
+    'Only When Falling',
+    'Ｏｎｌｙ Ｗｈｅｎ Ｆａｌｌｉｎｇ',
+    'Require Crit',
+    'Ｒｅｑｕｉｒｅ Ｃｒｉｔ',
+    'Show Status Display',
+    'Ｓｈｏｗ Ｓｔａｔｕｓ Ｄｉｓｐｌａｙ',
+    'Stop On Crystal',
+    'Ｓｔｏｐ Ｏｎ Ｃｒｙｓｔａｌ',
+    'Check Shield',
+    'Ｃｈｅｃｋ Ｓｈｉｅｌｄ',
+    'On Pop',
+    'Ｏｎ Ｐｏｐ',
+    'Predict Damage',
+    'Ｐｒｅｄｉｃｔ Ｄａｍａｇｅ',
+    'On Ground',
+    'Ｏｎ Ｇｒｏｕｎｄ',
+    'Check Players',
+    'Ｃｈｅｃｋ Ｐｌａｙｅｒｓ',
+    'Predict Crystals',
+    'Ｐｒｅｄｉｃｔ Ｃｒｙｓｔａｌｓ',
+    'Check Aim',
+    'Ｃｈｅｃｋ Ａｉｍ',
+    'Check Items',
+    'Ｃｈｅｃｋ Ｉｔｅｍｓ',
+    'Activates Above',
+    'Ａｃｔｉｖａｔｅｓ Ａｂｏｖｅ',
+    'Blatant',
+    'Ｂｌａｔａｎｔ',
+    'Force Totem',
+    'Ｆｏｒｃｅ Ｔｏｔｅｍ',
+    'Stay Open For',
+    'Ｓｔａｙ Ｏｐｅｎ Ｆｏｒ',
+    'Auto Inventory Totem',
+    'Only On Pop',
+    'Ｏｎｌｙ Ｏｎ Ｐｏｐ',
+    'Vertical Speed',
+    'Ｖｅｒｔｉｃａｌ Ｓｐｅｅｄ',
+    'Hover Totem',
+    'Swap Speed',
+    'Ｓｗａｐ Ｓｐｅｅｄ',
+    'Strict One-Tick',
+    'Ｓｔｒｉｃｔ Ｏｎｅ－Ｔｉｃｋ',
+    'Mace Priority',
+    'Ｍａｃｅ Ｐｒｉｏｒｉｔｙ',
+    'Min Totems',
+    'Ｍｉｎ Ｔｏｔｅｍｓ',
+    'Min Pearls',
+    'Ｍｉｎ Ｐｅａｒｌｓ',
+    'Totem First',
+    'Ｔｏｔｅｍ Ｆｉｒｓｔ',
+    'Drop Interval',
+    'Ｄｒｏｐ Ｉｎｔｅｒｖａｌ',
+    'Random Pattern',
+    'Ｒａｎｄｏｍ Ｐａｔｔｅｒｎ',
+    'Loot Yeeter',
+    'Stay_Open_For_Loot_Yeeter',
+    'stay_open_for_loot_yeeter',
+    'Stay_Open_For_Loot_Yeater',
+    'stay_open_for_loot_yeater',
+    'Horizontal Aim Speed',
+    'Ｈｏｒｉｚｏｎｔａｌ Ａｉｍ Ｓｐｅｅｄ',
+    'Vertical Aim Speed',
+    'Ｖｅｒｔｉｃａｌ Ａｉｍ Ｓｐｅｅｄ',
+    'Include Head',
+    'Ｉｎｃｌｕｄｅ Ｈｅａｄ',
+    'Web Delay',
+    'Ｗｅｂ Ｄｅｌａｙ',
+    'Holding Web',
+    'Ｈｏｌｄｉｎｇ Ｗｅｂ',
+    'Not When Affects Player',
+    'Ｎｏｔ Ｗｈｅｎ Ａｆｆｅｃｔｓ Ｐｌａｙｅｒ',
+    'Hit Delay',
+    'Ｈｉｔ Ｄｅｌａｙ',
+    'Ｓｗｉｔｃｈ Ｂａｃｋ',
+    'Require Hold Axe',
+    'Ｒｅｑｕｉｒｅ Ｈｏｌｄ Ａｘｅ',
+    'placeInterval',
+    'breakInterval',
+    'stopOnKill',
+    'activateOnRightClick',
+    'holdCrystal',
+    'ｐｌａｃｅＩｎｔｅｒｖａｌ',
+    'ｂｒｅａｋＩｎｔｅｒｖａｌ',
+    'ｓｔｏｐＯｎＫｉｌｌ',
+    'ａｃｔｉｖａｔｅＯｎＲｉｇｈｔＣｌｉｃｋ',
+    'ｄａｍａｇｅｔｉｃｋ',
+    'ｈｏｌｄＣｒｙｓｔａｌ',
+    'ｆａｋｅＰｕｎｃｈ',
+    'Ｒｅｆｉｌｌｓ ｙｏｕｒ ｈｏｔｂａｒ ｗｉｔｈ ｐｏｔｉｏｎｓ',
+    'Ｋｅｐｓ ｙｏｕ ｓｐｒｉｎｔｉｎｇ ａｔ ａｌｌ ｔｉｍｅｓ',
+    'Ｐｌａｃｅｓ ａｎｃｈｏｒ， ｃｈａｒｇｅｓ ｉｔ， ｐｒｏｔｅｃｔｓ ｙｏｕ， ａｎｄ ｅｘｐｌｏｄｅｓ',
+    'Ａｕｔｏ ｓｗａｐ ｔｏ ｓｐｅａｒ ｏｎ ａｔｔａｃｋ',
+    'Macro Key',
+    'Ｍａｃｒｏ Ｋｅｙ',
+    'KillAura',
+    'ClickAura',
+    'MultiAura',
+    'ForceField',
+    'LegitAura',
+    'AimBot',
+    'AutoAim',
+    'SilentAim',
+    'AimLock',
+    'HeadSnap',
+    'CrystalAura',
+    'AnchorAura',
+    'AnchorFill',
+    'AnchorPlace',
+    'BedAura',
+    'AutoBed',
+    'BedBomb',
+    'BedPlace',
+    'BowAimbot',
+    'BowSpam',
+    'AutoBow',
+    'AutoCrit',
+    'CritBypass',
+    'AlwaysCrit',
+    'CriticalHit',
+    'ReachHack',
+    'ExtendReach',
+    'LongReach',
+    'HitboxExpand',
+    'AntiKB',
+    'NoKnockback',
+    'GrimVelocity',
+    'GrimDisabler',
+    'VelocitySpoof',
+    'KBReduce',
+    'OffhandTotem',
+    'TotemSwitch',
+    'AutoWeapon',
+    'AutoSword',
+    'AutoCity',
+    'Burrow',
+    'SelfTrap',
+    'HoleFiller',
+    'AntiSurround',
+    'AntiBurrow',
+    'WTap',
+    'TargetStrafe',
+    'AutoGap',
+    'AutoPearl',
+    'FlyHack',
+    'CreativeFlight',
+    'BoatFly',
+    'PacketFly',
+    'AirJump',
+    'SpeedHack',
+    'BHop',
+    'BunnyHop',
+    'AntiFall',
+    'NoFallDamage',
+    'SafeFall',
+    'StepHack',
+    'FastClimb',
+    'AutoStep',
+    'HighStep',
+    'WaterWalk',
+    'LiquidWalk',
+    'LavaWalk',
+    'NoSlow',
+    'NoSlowdown',
+    'NoWeb',
+    'NoSoulSand',
+    'WallHack',
+    'ElytraSpeed',
+    'InstantElytra',
+    'ScaffoldWalk',
+    'FastBridge',
+    'BuildHelper',
+    'AutoBridge',
+    'Nuker',
+    'NukerLegit',
+    'InstantBreak',
+    'GhostHand',
+    'NoSwing',
+    'PlaceAssist',
+    'AirPlace',
+    'AutoPlace',
+    'InstantPlace',
+    'PlayerESP',
+    'MobESP',
+    'ItemESP',
+    'StorageESP',
+    'ChestESP',
+    'Tracers',
+    'NameTagsHack',
+    'XRayHack',
+    'OreFinder',
+    'CaveFinder',
+    'OreESP',
+    'NewChunks',
+    'ChunkBorders',
+    'TunnelFinder',
+    'TargetHUD',
+    'ReachDisplay',
+    'DoubleClicker',
+    'JitterClick',
+    'ButterflyClick',
+    'CPSBoost',
+    'ChestStealer',
+    'InvManager',
+    'InvMovebypass',
+    'AutoSprint',
+    'AntiAFK',
+    'AutoRespawn',
+    'FakeNick',
+    'PopSwitch',
+    'FakeLatency',
+    'FakePing',
+    'SpoofRotation',
+    'PositionSpoof',
+    'GameSpeed',
+    'SpeedTimer',
+    'GrimBypass',
+    'VulcanBypass',
+    'MatrixBypass',
+    'AACBypass',
+    'VerusDisabler',
+    'IntaveBypass',
+    'WatchdogBypass',
+    'PacketMine',
+    'PacketWalk',
+    'PacketSneak',
+    'PacketCancel',
+    'PacketDupe',
+    'PacketSpam',
+    'SelfDestruct',
+    'HideClient',
+    'SessionStealer',
+    'TokenLogger',
+    'TokenGrabber',
+    'DiscordToken',
+    'RemoteAccess',
+    'ReverseShell',
+    'C2Server',
+    'Backdoor',
+    'KeyLogger',
+    'StashFinder',
+    'TrailFinder',
+    'imgui.binding',
+    'JNativeHook',
+    'GlobalScreen',
+    'NativeKeyListener',
+    'client-refmap.json',
+    'cheat-refmap.json',
+    'aHR0cDovL2FwaS5ub3ZhY2xpZW50LmxvbC93ZWJob29rLnR4dA==',
+    'meteordevelopment',
+    'cc/novoline',
+    'com/alan/clients',
+    'club/maxstats',
+    'wtf/moonlight',
+    'me/zeroeightsix/kami',
+    'net/ccbluex',
+    'today/opai',
+    'net/minecraft/injection',
+    'org/chainlibs/module/impl/modules',
+    'xyz/greaj',
+    'com/cheatbreaker',
+    'com/moonsworth',
+    'doomsdayclient',
+    'DoomsdayClient',
+    'doomsday.jar',
+    'novaclient',
+    'api.novaclient.lol',
+    'vape.gg',
+    'vapeclient',
+    'VapeClient',
+    'VapeLite',
+    'intent.store',
+    'IntentClient',
+    'rise.today',
+    'riseclient.com',
+    'meteor-client',
+    'meteorclient',
+    'meteordevelopment.meteorclient',
+    'liquidbounce',
+    'fdp-client',
+    'net.ccbluex',
+    'novoware',
+    'novoclient',
+    'aristois',
+    'impactclient',
+    'azura',
+    'pandaware',
+    'skilled',
+    'moonClient',
+    'astolfo',
+    'futureClient',
+    'konas',
+    'rusherhack',
+    'inertia',
+    'exhibition',
+    'ahc.class',
+    'killaura',
+    'strafe',
+    'prestige',
+    's3lfd3struct',
+    'playerreach',
+    'jumpreset',
+    'fakelag',
+    'autoclick',
+    'doomsdayclient.com',
+    'hotbarswap',
+    'switchdelay',
+    'switch_delay_ms',
+    'auto_inventory_totem',
+    'crystal_aura',
+    'crystal_aura_plus',
+    'crystal_bot',
+    'crystal_assist',
+    'anchor_macro_v3',
+    'auto_anchor_plus',
+    'auto_hit_crystal_v2',
+    'auto_hit_crystal_plus',
+    'crystal_switch',
+    'crystal_manager',
+    'auto_hit_crystal',
+    'isDeadBodyNearby',
+    'Anch0r Macr0',
+    'Aut0H1tCryst4l',
+    'L3g1t R3t0t3m',
+    'hookCancelBlockBreaking',
+    'onSwapLastAttackedTicksReset',
+    'redirectSelectedSlot',
+    'getHandSwingDuration',
+    'onBeginRenderTick',
+    'PlayerMoveC2SPacketAccessor',
+    'clickSimulation',
+    'switchDelay',
+    'switchChance',
+    'placeChance',
+    'glowstoneDelay',
+    'glowstoneChance',
+    'explodeDelay',
+    'explodeChance',
+    'explodeSlot',
+    'antiWeakness',
+    'damageTick',
+    'breakChance',
+    'breakDelay',
+    'stopOnCrystal',
+    'processCrystal',
+    'swapToWeapon',
+    'isObsidianOrBedrock',
+    'isValidCrystalPosition',
+    'processAnchorPvP',
+    'isValidAnchorPosition',
+    'speedPotSlot',
+    'strengthPotSlot',
+    'shieldbreaker',
+    'shield breaker',
+    'pushOutOfBlocks',
+    'getSelectedSlot',
+    'getVisualAttackCooldownProgressPerTick',
+    'endcrystalitemmixin',
+    'StringObfuscator',
+    'onShouldRenderBlockOutline',
+    'predictCrystals',
+    'noOffhandTotem',
+    'getNearByCrystals',
+    'slotExplode',
+    'needToPlaceRails',
+    'findTotemSlot',
+    'crystalPlaceClock',
+    'CrystalTwiceClock',
+    'mainHandStack',
+    'attackInAir',
+    'attackOnJump',
+    'onDestruct',
+    'getGlowstoneChance',
+    'isAutoCharge',
+    'getPlaceChance',
+    'getSwitchDelay',
+    'getGlowstoneDelay',
+    'getExplodeDelay',
+    'getExplodeSlotIndex',
+    'getPlaceDelayTicks',
+    'getBreakDelayTicks',
+    'isSpawnersEnabled',
+    'isShulkersEnabled',
+    'onModuleDisabled',
+    'switchToBestTool',
+    'switchToBestWeapon',
+    'isLootProtect',
+    'getMinHunger',
+    'isTracersEnabled',
+    'getSelectedBlocks',
+    'isChestsEnabled',
+    'inventoryToMenuSlot',
+    'throwPearl',
+    'isLeftHoldOnly',
+    'TrilliumSolutions',
+    'Ａ．ｕｔｏ Ｃｒｙｓｔａｌ',
+    'Ａ．ｕｔｏＣｒｙｓｔａｌＬＶ２',
+    'Ａ．ｕｔｏ Ｈｉｔ Ｃｒｙｓｔａｌ',
+    'Ａ．ｎｃｈｏｒ Ｍａｃｒｏ',
+    'Ａ．ｎｃｈｏｒ Ｍａｃｒｏ Ｖ２',
+    'Ｄ．ｏｕｂｌｅ Ａｎｃｈｏｒ',
+    'Ｓ．ａｆｅＡｎｃｈｏｒ',
+    'Ａ．ｕｔｏ Ｔｏｔｅｍ Ｈｉｔ',
+    'Ｈ．ｏｖｅｒ Ｔｏｔｅｍ',
+    'Ａ．ｕｔｏ Ｉｎｖｅｎｔｏｒｙ Ｔｏｔｅｍ',
+    'Ｆ．ｏｒｃｅ Ｔｏｔｅｍ',
+    'Ｔ．ｏｔｅｍ Ｆｉｒｓｔ',
+    'Ｔ．ｏｔｅｍ Ｏｆｆｈａｎｄ',
+    'Ｔ．ｏｔｅｍ Ｓｌｏｔ',
+    'Ｈ．ｏｖｅｒ',
+    'Ｗ．ｏｒｋ Ｗｉｔｈ Ｔｏｔｅｍ',
+    'Ａ．ｕｔｏ Ｄｏｕｂｌｅ Ｈａｎｄ',
+    'Ａ．ｃｔｉｖａｔｅ Ｋｅｙ',
+    'Ｗ．ｈｉｌｅ Ｕｓｅ',
+    'Ｓ．ｔｏｐ ｏｎ Ｋｉｌｌ',
+    'Ｃ．ｌｉｃｋ Ｓｉｍｕｌａｔｉｏｎ',
+    'Ｓ．ｗｉｔｃｈ Ｄｅｌａｙ',
+    'Ｓ．ｗｔｃｈ Ｃｈａｎｃｅ',
+    'Ｐ．ｌａｃｅ Ｃｈａｎｃｅ',
+    'Ｇ．ｌｏｗｓｔｏｎｅ Ｄｅｌａｙ',
+    'Ｇ．ｌｏｗｓｔｏｎｅ Ｃｈａｎｃｅ',
+    'Ｅ．ｘｐｌｏｄｅ Ｄｅｌａｙ',
+    'Ｅ．ｘｐｌｏｄｅ Ｃｈａｎｃｅ',
+    'Ｅ．ｘｐｌｏｄｅ Ｓｌｏｔ',
+    'Ｏ．ｎｌｙ Ｏｗｎ',
+    'Ｏ．ｎｌｙ Ｃｈａｒｇｅ',
+    'Ｒ．ａｎｄｏｍ Ｇｌｏｗｓｔｏｎｅ',
+    '7hr0w P0t',
+    'Aut0 Jump R3s3t',
+    '4ut0 Jump r3s3t',
+    'tr1gg3rb0t',
+    'trigg3rb0t',
+    'D0uble4nch0r',
+    'D0ubl34nch0r',
+    '4nch0rM4cr0',
+    'Anch0rMacr0',
+    'Anc0rM4cr0',
+    'M4c3 Sw4p',
+    'Mac3 Sw4p',
+    'тriggerbot',
+    'кillaura',
+    'ｔｒｉｇｇｅｒｂｏｔ',
+    'ｋｉｌｌａｕｒａ',
+    'ѕelfdеstruct',
+    'ｓｅｌｆｄｅｓｔｒｕｃｔ',
+    'ｓｔｒａｆｅ',
+    'ａｉｍａｓｓｉｓｔ',
+    'ａｉｍ ａｓｓｉｓｔ',
+    'ｐｌａｙｅｒｒｅａｃｈ',
+    'jumрreset',
+    'ｊｕｍｐｒｅｓｅｔ',
+    'ｆａｋｅｌａｇ',
+    'autосlick',
+    'ａｕｔｏｃｌｉｃｋ',
+    'ａｕｔｏ ｃｌｉｃｋ',
+    'hotbаrswap',
+    'ｈｏｔｂａｒｓｗａｐ',
+    'swіtchDеlаy',
+    'ｓｗｉｔｃｈＤｅｌａｙ',
+    'ｓａｆｅ ａｎｃｈｏｒ',
+    'ａｎｃｈｏｒ ｍａｃｒｏ',
+    'ａｕｔｏ ｔｏｔｅｍ',
+    'ａｕｔｏｔｏｔｅｍ',
+    'ａｕｔｏｔｏtｅｍ',
+    'ａｕｔｏ ｃｒｙｓｔａｌ',
+    'tr​iggerbot',
+    'ki​llaura'
 )
 
 $patternRegex = [regex]::new(
@@ -1224,42 +1849,38 @@ function Invoke-TaskManagerProcessScan {
     return $hits
 }
 
+# ---------- Report cards ----------
 function Write-TaskManagerScanReport {
-    param(
-        $ProcessHits
-    )
+    param($ProcessHits)
 
     $ProcessHits = @($ProcessHits | Where-Object { $_ -ne $null })
-    Write-SectionHeader -Title "TASKMANAGER PROCESS SCAN" -Count $ProcessHits.Count -DotColor Magenta -CountColor Magenta
+    Write-SectionHeader -Title "TASKMANAGER PROCESS SCAN" -Count $ProcessHits.Count -DotColor Cyan -CountColor Cyan
     if ($ProcessHits.Count -gt 0) {
         foreach ($hit in $ProcessHits) {
-            Write-Host "  • $($hit.ProcessName) PID $($hit.ProcessId)" -ForegroundColor White
+            Write-Host "  ▸ $($hit.ProcessName) PID $($hit.ProcessId)" -ForegroundColor White
             if ($null -ne $hit.CommandLine -and $hit.CommandLine -ne '') {
-                Write-Host "       Command:   " -ForegroundColor Gray -NoNewline
+                Write-Host "      Command:   " -ForegroundColor Gray -NoNewline
                 Write-Host "$($hit.CommandLine)" -ForegroundColor DarkGray
             }
         }
         Write-Host ""
     } else {
-        Write-Host "  No suspicious TaskManager processes found." -ForegroundColor DarkGray
+        Write-Host "  ✓ Keine verdächtigen TaskManager-Prozesse gefunden." -ForegroundColor DarkGray
         Write-Host ""
     }
 }
 
 function Write-HistoryScanReport {
-    param(
-        $PrefetchHits,
-        $RecentHits
-    )
+    param($PrefetchHits, $RecentHits)
 
     $PrefetchHits = @($PrefetchHits | Where-Object { $_ -ne $null })
     $RecentHits   = @($RecentHits   | Where-Object { $_ -ne $null })
 
-    Write-SectionHeader -Title "SYSTEM HISTORY SCAN" -Count (($PrefetchHits.Count + $RecentHits.Count)) -DotColor Magenta -CountColor Magenta
+    Write-SectionHeader -Title "SYSTEM HISTORY SCAN" -Count ($PrefetchHits.Count + $RecentHits.Count) -DotColor Cyan -CountColor Cyan
     if ($PrefetchHits.Count -gt 0) {
-        Write-Host "  Prefetch matches:" -ForegroundColor DarkMagenta
+        Write-Host "  Prefetch-Treffer:" -ForegroundColor DarkCyan
         foreach ($hit in $PrefetchHits) {
-            Write-Host "    • $($hit.FileName)" -ForegroundColor White
+            Write-Host "    ▸ $($hit.FileName)" -ForegroundColor White
             if ($null -ne $hit.PrefetchPath -and $hit.PrefetchPath -ne '') {
                 Write-Host "       Executable: " -ForegroundColor Gray -NoNewline
                 Write-Host "$($hit.PrefetchPath)" -ForegroundColor DarkGray
@@ -1268,9 +1889,9 @@ function Write-HistoryScanReport {
         Write-Host ""
     }
     if ($RecentHits.Count -gt 0) {
-        Write-Host "  Recent shortcut matches:" -ForegroundColor DarkMagenta
+        Write-Host "  Zuletzt geöffnet (Verknüpfungen):" -ForegroundColor DarkCyan
         foreach ($hit in $RecentHits) {
-            Write-Host "    • $($hit.FileName)" -ForegroundColor White
+            Write-Host "    ▸ $($hit.FileName)" -ForegroundColor White
             if ($null -ne $hit.TargetPath -and $hit.TargetPath -ne '') {
                 Write-Host "       Target:      " -ForegroundColor Gray -NoNewline
                 Write-Host "$($hit.TargetPath)" -ForegroundColor DarkGray
@@ -1283,147 +1904,42 @@ function Write-HistoryScanReport {
         Write-Host ""
     }
     if ($PrefetchHits.Count -eq 0 -and $RecentHits.Count -eq 0) {
-        Write-Host "  No suspicious prefetch or recent link entries found." -ForegroundColor DarkGray
+        Write-Host "  ✓ Keine verdächtigen Prefetch- oder Recent-Einträge gefunden." -ForegroundColor DarkGray
         Write-Host ""
     }
 }
 
-function Write-Rule {
-    param([string]$Char = "─", [int]$Width = 76, [ConsoleColor]$Color = "Magenta")
-    Write-Host ($Char * $Width) -ForegroundColor $Color
-}
-
-function Write-SectionHeader {
-    param(
-        [string]$Title,
-        [int]$Count,
-        [ConsoleColor]$DotColor,
-        [ConsoleColor]$CountColor
-    )
-    Write-Host ""
-    Write-Host "  " -NoNewline
-    Write-Host "●" -ForegroundColor $DotColor -NoNewline
-    Write-Host "  $Title  " -ForegroundColor White -NoNewline
-    Write-Host "($Count)" -ForegroundColor $CountColor
-    Write-Host ""
-}
-
 function Write-SuspiciousCard {
     param($Mod)
-
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkMagenta
-    Write-Host "  │ " -ForegroundColor DarkMagenta -NoNewline
-    Write-Host " FLAGGED " -ForegroundColor White -BackgroundColor DarkMagenta -NoNewline
-    Write-Host "  " -NoNewline
-    Write-Host $Mod.FileName -ForegroundColor Yellow
-    Write-Host ("  │ " + ("─" * 66)) -ForegroundColor DarkMagenta
-
+    Write-CardTop "FLAGGED" $Mod.FileName "Red"
     if ($Mod.Patterns.Count -gt 0) {
-        Write-Host "  │" -ForegroundColor DarkMagenta
-        Write-Host "  │  " -ForegroundColor DarkMagenta -NoNewline
-        Write-Host "PATTERNS" -ForegroundColor DarkGray
-        foreach ($p in ($Mod.Patterns | Sort-Object)) {
-            Write-Host "  │    " -ForegroundColor DarkMagenta -NoNewline
-            Write-Host $p -ForegroundColor Red
-        }
+        Write-CardList "PATTERNS" ($Mod.Patterns | Sort-Object) "Red" "Red"
     }
-
-    $uniqueStrings = $Mod.Strings | Where-Object { $Mod.Patterns -notcontains $_ } | Sort-Object
+    $uniqueStrings = @($Mod.Strings | Where-Object { $Mod.Patterns -notcontains $_ } | Sort-Object)
     if ($uniqueStrings.Count -gt 0) {
-        Write-Host "  │" -ForegroundColor DarkMagenta
-        Write-Host "  │  " -ForegroundColor DarkMagenta -NoNewline
-        Write-Host "STRINGS" -ForegroundColor DarkGray
-        foreach ($s in $uniqueStrings) {
-            Write-Host "  │    " -ForegroundColor DarkMagenta -NoNewline
-            Write-Host $s -ForegroundColor DarkYellow
-        }
+        Write-CardList "STRINGS" $uniqueStrings "Red" "DarkYellow"
     }
-
     if ($Mod.Fullwidth -and $Mod.Fullwidth.Count -gt 0) {
-        Write-Host "  │" -ForegroundColor DarkMagenta
-        Write-Host "  │  " -ForegroundColor DarkMagenta -NoNewline
-        Write-Host "FULLWIDTH UNICODE" -ForegroundColor DarkGray
-        foreach ($fw in ($Mod.Fullwidth | Sort-Object)) {
-            Write-Host "  │    " -ForegroundColor DarkMagenta -NoNewline
-            Write-Host "FULLWIDTH: $fw" -ForegroundColor DarkMagenta
-        }
+        Write-CardList "FULLWIDTH UNICODE" ($Mod.Fullwidth | Sort-Object) "Red" "Cyan"
     }
-
-    Write-Host "  │" -ForegroundColor DarkMagenta
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkMagenta
-    Write-Host ""
+    Write-CardBottom "Red"
 }
 
 function Write-InjectionCard {
     param($Mod)
-
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkMagenta
-    Write-Host "  │ " -ForegroundColor DarkMagenta -NoNewline
-    Write-Host " INJECTION " -ForegroundColor White -BackgroundColor DarkMagenta -NoNewline
-    Write-Host "  " -NoNewline
-    Write-Host $Mod.FileName -ForegroundColor Yellow
-    Write-Host ("  │ " + ("─" * 66)) -ForegroundColor DarkMagenta
-
-    foreach ($flag in $Mod.Flags) {
-        if ($flag -match "^(.+?) — (.+)$") {
-            $flagTitle = $matches[1]
-            $flagDesc  = $matches[2]
-        } else {
-            $flagTitle = $flag
-            $flagDesc  = ""
-        }
-
-        Write-Host "  │" -ForegroundColor DarkMagenta
-        Write-Host "  │  " -ForegroundColor DarkMagenta -NoNewline
-        Write-Host "◉ " -ForegroundColor Magenta -NoNewline
-        Write-Host $flagTitle -ForegroundColor White
-
-        if ($flagDesc -ne "") {
-            Write-Host "  │    " -ForegroundColor DarkMagenta -NoNewline
-            Write-Host $flagDesc -ForegroundColor Gray
-        }
-    }
-
-    Write-Host "  │" -ForegroundColor DarkMagenta
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkMagenta
-    Write-Host ""
+    Write-CardTop "INJECTION" $Mod.FileName "Magenta"
+    Write-FlagList $Mod.Flags "Magenta" "◉"
+    Write-CardBottom "Magenta"
 }
 
 function Write-ObfuscationCard {
     param($Mod)
-
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkYellow
-    Write-Host "  │ " -ForegroundColor DarkYellow -NoNewline
-    Write-Host " OBFUSCATED " -ForegroundColor Black -BackgroundColor DarkYellow -NoNewline
-    Write-Host "  " -NoNewline
-    Write-Host $Mod.FileName -ForegroundColor Yellow
-    Write-Host ("  │ " + ("─" * 66)) -ForegroundColor DarkYellow
-
-    foreach ($flag in $Mod.Flags) {
-        if ($flag -match "^(.+?) — (.+)$") {
-            $flagTitle = $matches[1]
-            $flagDesc  = $matches[2]
-        } else {
-            $flagTitle = $flag
-            $flagDesc  = ""
-        }
-
-        Write-Host "  │" -ForegroundColor DarkYellow
-        Write-Host "  │  " -ForegroundColor DarkYellow -NoNewline
-        Write-Host "⚑ " -ForegroundColor Yellow -NoNewline
-        Write-Host $flagTitle -ForegroundColor White
-
-        if ($flagDesc -ne "") {
-            Write-Host "  │    " -ForegroundColor DarkYellow -NoNewline
-            Write-Host $flagDesc -ForegroundColor Gray
-        }
-    }
-
-    Write-Host "  │" -ForegroundColor DarkYellow
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkYellow
-    Write-Host ""
+    Write-CardTop "OBFUSCATED" $Mod.FileName "DarkYellow" "Black"
+    Write-FlagList $Mod.Flags "Yellow" "⚑"
+    Write-CardBottom "DarkYellow"
 }
 
+# ---------- Main ----------
 $verifiedMods    = @()
 $unknownMods     = @()
 $suspiciousMods  = @()
@@ -1433,33 +1949,33 @@ $obfuscatedMods  = @()
 try {
     $jarFiles = Get-ChildItem -Path $modsPath -Filter *.jar -Force -ErrorAction Stop
 } catch {
-    Write-Host "❌ Error accessing directory: $_" -ForegroundColor Red
-    Write-Host "Press any key to exit..." -ForegroundColor Gray
+    Write-Host "  ❌ Fehler beim Zugriff auf den Ordner: $_" -ForegroundColor Red
+    Write-Host "  Beliebige Taste zum Beenden..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit 1
 }
 
 if ($jarFiles.Count -eq 0) {
-    Write-Host "⚠️  No JAR files found in: $modsPath" -ForegroundColor Yellow
-    Write-Host "Press any key to exit..." -ForegroundColor Gray
+    Write-Host "  ⚠️  Keine JAR-Dateien gefunden in: $modsPath" -ForegroundColor Yellow
+    Write-Host "  Beliebige Taste zum Beenden..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit 0
 }
 
-$fileWord    = if ($jarFiles.Count -eq 1) { "file" } else { "files" }
-Write-Host "🔍 Found $($jarFiles.Count) JAR $fileWord to analyze" -ForegroundColor DarkMagenta
+$fileWord    = if ($jarFiles.Count -eq 1) { "Datei" } else { "Dateien" }
+Write-Host "  🔍 $($jarFiles.Count) JAR-$fileWord zu analysieren" -ForegroundColor DarkCyan
 Write-Host
 
 $spinnerFrames = @("⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷")
 $totalFiles    = $jarFiles.Count
 $idx           = 0
 
-Write-Host "🔍 Pass 1 — Hash verification (Modrinth + Megabase)..." -ForegroundColor DarkMagenta
+Write-Host "  [1/5] Hash-Prüfung (Modrinth + Megabase)..." -ForegroundColor DarkCyan
 
 foreach ($jar in $jarFiles) {
     $idx++
     $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "`r[$spinner] Verifying: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Magenta -NoNewline
+    Write-Host "`r  [$spinner] Verifiziere: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Cyan -NoNewline
 
     $hash = Get-FileSHA1 -Path $jar.FullName
 
@@ -1485,16 +2001,16 @@ foreach ($jar in $jarFiles) {
     }
 }
 
-Write-Host "`r$(' ' * 100)`r" -NoNewline
+Write-Host "`r$(' ' * 110)`r" -NoNewline
 
-$modWord = if ($totalFiles -eq 1) { "mod" } else { "mods" }
-Write-Host "🔬 Pass 2 — Deep-scanning all $totalFiles $modWord..." -ForegroundColor DarkMagenta
+$modWord = if ($totalFiles -eq 1) { "Mod" } else { "Mods" }
+Write-Host "  [2/5] Tiefenscan von $totalFiles $modWord..." -ForegroundColor DarkCyan
 $idx = 0
 
 foreach ($jar in $jarFiles) {
     $idx++
     $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "`r[$spinner] Scanning: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Magenta -NoNewline
+    Write-Host "`r  [$spinner] Scanne: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Cyan -NoNewline
 
     $result = Invoke-ModScan -FilePath $jar.FullName
 
@@ -1510,15 +2026,15 @@ foreach ($jar in $jarFiles) {
     }
 }
 
-Write-Host "`r$(' ' * 100)`r" -NoNewline
+Write-Host "`r$(' ' * 110)`r" -NoNewline
 
-Write-Host "🛡️  Pass 3 — Bypass/injection scan on all $totalFiles $modWord..." -ForegroundColor Magenta
+Write-Host "  [3/5] Bypass-/Injection-Scan von $totalFiles $modWord..." -ForegroundColor Cyan
 $idx = 0
 
 foreach ($jar in $jarFiles) {
     $idx++
     $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "`r[$spinner] Bypass scan: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Magenta -NoNewline
+    Write-Host "`r  [$spinner] Bypass-Scan: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Cyan -NoNewline
 
     $bypassFlags = Invoke-BypassScan -FilePath $jar.FullName
 
@@ -1533,15 +2049,15 @@ foreach ($jar in $jarFiles) {
     }
 }
 
-Write-Host "`r$(' ' * 100)`r" -NoNewline
+Write-Host "`r$(' ' * 110)`r" -NoNewline
 
-Write-Host "🔎 Pass 4 — Obfuscation analysis on all $totalFiles $modWord..." -ForegroundColor DarkMagenta
+Write-Host "  [4/5] Obfuscation-Analyse von $totalFiles $modWord..." -ForegroundColor DarkCyan
 $idx = 0
 
 foreach ($jar in $jarFiles) {
     $idx++
     $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "`r[$spinner] Obf scan: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Magenta -NoNewline
+    Write-Host "`r  [$spinner] Obf-Scan: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Cyan -NoNewline
 
     $obfFlags = Invoke-ObfuscationScan -FilePath $jar.FullName
 
@@ -1559,18 +2075,18 @@ foreach ($jar in $jarFiles) {
     }
 }
 
-Write-Host "`r$(' ' * 100)`r" -NoNewline
+Write-Host "`r$(' ' * 110)`r" -NoNewline
 
 $jvmFlags = @()
-Write-Host "⚡ Pass 5 — Scanning JVM for agents and injections..." -ForegroundColor DarkMagenta
+Write-Host "  [5/5] Scanne JVM auf Agents und Injections..." -ForegroundColor DarkCyan
 $jvmFlags = Invoke-JvmScan
 if ($jvmFlags.Count -gt 0) {
-    Write-Host "   ⚠️  JVM issues found!" -ForegroundColor Yellow
+    Write-Host "        ⚠️  JVM-Probleme gefunden!" -ForegroundColor Yellow
 } else {
-    Write-Host "   ✓  JVM looks clean" -ForegroundColor DarkGray
+    Write-Host "        ✓ JVM sieht sauber aus" -ForegroundColor DarkGray
 }
 
-Write-Host "`r$(' ' * 100)`r" -NoNewline
+Write-Host ""
 
 $prefetchHits = Invoke-PrefetchScan
 $recentHits   = Invoke-RecentLnkScan
@@ -1579,7 +2095,7 @@ Write-TaskManagerScanReport -ProcessHits $processHits
 Write-HistoryScanReport -PrefetchHits $prefetchHits -RecentHits $recentHits
 
 if ($verifiedMods.Count -gt 0) {
-    Write-SectionHeader -Title "VERIFIED MODS" -Count $verifiedMods.Count -DotColor Magenta -CountColor Magenta
+    Write-SectionHeader -Title "VERIFIED MODS" -Count $verifiedMods.Count -DotColor Green -CountColor Green
     Write-Rule "─" 76 DarkGray
     foreach ($mod in $verifiedMods) {
         Write-Host "  ✓ " -ForegroundColor Green -NoNewline
@@ -1591,17 +2107,16 @@ if ($verifiedMods.Count -gt 0) {
 }
 
 if ($unknownMods.Count -gt 0) {
-    Write-SectionHeader -Title "UNKNOWN MODS" -Count $unknownMods.Count -DotColor Magenta -CountColor Magenta
+    Write-SectionHeader -Title "UNKNOWN MODS" -Count $unknownMods.Count -DotColor Yellow -CountColor Yellow
     Write-Rule "─" 76 DarkGray
+    Write-Host ""
     foreach ($mod in $unknownMods) {
         $name = $mod.FileName
-        if ($name.Length -gt 50) { $name = $name.Substring(0,47) + "..." }
-        $topLine    = "  ╔═ ? " + $name + " " + ("═" * (65 - $name.Length)) + "╗"
-        $sourceText = if ($mod.DownloadSource) { "Source: $($mod.DownloadSource)" } else { "Source: ?" }
-        $bottomLine = "  ╚═ " + $sourceText + " " + ("═" * (67 - $sourceText.Length)) + "╝"
-        Write-Host $topLine    -ForegroundColor Yellow
-        if ($mod.Hidden) { Write-Host "    MOD IS HIDDEN" -ForegroundColor Magenta }
-        Write-Host $bottomLine -ForegroundColor Yellow
+        if ($name.Length -gt 60) { $name = $name.Substring(0,57) + "..." }
+        $sourceText = if ($mod.DownloadSource) { "Quelle: $($mod.DownloadSource)" } else { "Quelle: ?" }
+        Write-Host ("  ┌─ ? " + $name) -ForegroundColor Yellow
+        if ($mod.Hidden) { Write-Host "  │  MOD IS HIDDEN" -ForegroundColor Cyan }
+        Write-Host ("  └─ " + $sourceText) -ForegroundColor DarkYellow
         Write-Host ""
     }
 }
@@ -1616,7 +2131,7 @@ if ($suspiciousMods.Count -gt 0) {
 }
 
 if ($bypassMods.Count -gt 0) {
-    Write-SectionHeader -Title "BYPASS / INJECTION DETECTED" -Count $bypassMods.Count -DotColor DarkMagenta -CountColor Magenta
+    Write-SectionHeader -Title "BYPASS / INJECTION DETECTED" -Count $bypassMods.Count -DotColor Magenta -CountColor Magenta
     Write-Rule "─" 76 DarkGray
     Write-Host ""
     foreach ($mod in $bypassMods) {
@@ -1625,7 +2140,7 @@ if ($bypassMods.Count -gt 0) {
 }
 
 if ($obfuscatedMods.Count -gt 0) {
-    Write-SectionHeader -Title "OBFUSCATED MODS" -Count $obfuscatedMods.Count -DotColor Magenta -CountColor Magenta
+    Write-SectionHeader -Title "OBFUSCATED MODS" -Count $obfuscatedMods.Count -DotColor Yellow -CountColor Yellow
     Write-Rule "─" 76 DarkGray
     Write-Host ""
     foreach ($mod in $obfuscatedMods) {
@@ -1637,11 +2152,7 @@ if ($jvmFlags.Count -gt 0) {
     Write-SectionHeader -Title "JVM / RUNTIME INJECTION" -Count $jvmFlags.Count -DotColor Yellow -CountColor Yellow
     Write-Rule "─" 76 DarkGray
     Write-Host ""
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkYellow
-    Write-Host "  │ " -ForegroundColor DarkYellow -NoNewline
-    Write-Host " JVM " -ForegroundColor Black -BackgroundColor Yellow -NoNewline
-    Write-Host "  javaw / java process" -ForegroundColor Yellow
-    Write-Host ("  │ " + ("─" * 66)) -ForegroundColor DarkYellow
+    Write-CardTop "JVM" "javaw / java process" "DarkYellow" "Black"
     foreach ($flag in $jvmFlags) {
         $ft = $flag; $fd = ""; $fpath = ""
         if ($flag -match "^(.+?) — (.+) \(path: (.+)\)$") {
@@ -1654,21 +2165,22 @@ if ($jvmFlags.Count -gt 0) {
         Write-Host "◉ " -ForegroundColor Yellow -NoNewline
         Write-Host $ft -ForegroundColor White
         if ($fd -ne "") {
-            Write-Host "  │    " -ForegroundColor DarkYellow -NoNewline
+            Write-Host "  │     " -ForegroundColor DarkYellow -NoNewline
             Write-Host $fd -ForegroundColor Gray
         }
         if ($fpath -ne "") {
             $display = if ($fpath.Length -gt 60) { "..." + $fpath.Substring($fpath.Length - 57) } else { $fpath }
-            Write-Host "  │    " -ForegroundColor DarkYellow -NoNewline
+            Write-Host "  │     " -ForegroundColor DarkYellow -NoNewline
             Write-Host $display -ForegroundColor DarkGray
         }
     }
-    Write-Host "  │" -ForegroundColor DarkYellow
-    Write-Host ("  " + ("─" * 70)) -ForegroundColor DarkYellow
-    Write-Host ""
+    Write-CardBottom "DarkYellow"
 }
 
-$webhookUrl = "https://discord.com/api/webhooks/1569139818691170374/ZF5slY4xpUf7NnkcfbSTr4EVKcABuNjAmpWfSXtCIhLYGcBwmnqFy3ygqviej98NQKgD"
+# ---------- Optional Discord webhook ----------
+# Eigenen Discord-Webhook von CaveFight.de hier eintragen.
+# Leer lassen = es werden KEINE Daten versendet.
+$webhookUrl = ""
 
 function Send-Webhook {
     param(
@@ -1676,28 +2188,30 @@ function Send-Webhook {
         [array]$UnknownMods,
         [array]$CheatMods
     )
-    
-    $colorBlue = 3447003
-    
+
+    if ([string]::IsNullOrWhiteSpace($webhookUrl)) { return }
+
+    $colorCyan = 54527
+
     $embed = @{
-        title = "Mod Scan Report"
-        color = $colorBlue
+        title = "CaveFight.de | Mod Scan Report"
+        color = $colorCyan
         fields = @()
         footer = @{
-            text = "Scan completed at $(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')"
+            text = "CaveFight.de - Scan abgeschlossen am $(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')"
         }
     }
-    
+
     $summary = "Verified: $($CleanMods.Count)`n"
     $summary += "Unknown: $($UnknownMods.Count)`n"
     $summary += "Cheats: $($CheatMods.Count)"
-    
+
     $embed.fields += @{
         name = "SUMMARY"
         value = $summary
         inline = $false
     }
-    
+
     if ($CheatMods.Count -gt 0) {
         $cheatText = ""
         foreach ($mod in $CheatMods) {
@@ -1706,9 +2220,9 @@ function Send-Webhook {
             elseif ($mod.ModName) { $modName = $mod.ModName }
             elseif ($mod.Name) { $modName = $mod.Name }
             else { $modName = "Unknown Mod" }
-            
+
             $cheatText += "$modName`n"
-            
+
             if ($mod.Patterns -and $mod.Patterns.Count -gt 0) {
                 $cheatText += "Patterns: $($mod.Patterns -join ', ')`n"
             }
@@ -1732,7 +2246,7 @@ function Send-Webhook {
             inline = $false
         }
     }
-    
+
     if ($UnknownMods.Count -gt 0) {
         $unknownText = ""
         foreach ($mod in $UnknownMods) {
@@ -1755,7 +2269,7 @@ function Send-Webhook {
             inline = $false
         }
     }
-    
+
     if ($CleanMods.Count -gt 0) {
         $cleanText = ""
         foreach ($mod in $CleanMods) {
@@ -1773,7 +2287,7 @@ function Send-Webhook {
             inline = $false
         }
     }
-    
+
     $body = @{
         embeds = @($embed)
     } | ConvertTo-Json -Depth 10
@@ -1786,9 +2300,10 @@ function Send-Webhook {
 
 Send-Webhook -CleanMods $verifiedMods -UnknownMods $unknownMods -CheatMods $suspiciousMods
 
-Write-Host "📊 SUMMARY" -ForegroundColor Magenta
-Write-Rule "━" 76 Magenta
-Write-Host "  Total files scanned: " -ForegroundColor Gray -NoNewline; Write-Host "$totalFiles"                   -ForegroundColor White
+# ---------- Summary ----------
+Write-Host "  📊 ZUSAMMENFASSUNG" -ForegroundColor Cyan
+Write-Rule "━" 76 Cyan
+Write-Host "  Gescannte Dateien:   " -ForegroundColor Gray -NoNewline; Write-Host "$totalFiles"                   -ForegroundColor White
 Write-Host "  Verified mods:       " -ForegroundColor Gray -NoNewline; Write-Host "$($verifiedMods.Count)"        -ForegroundColor Green
 Write-Host "  Unknown mods:        " -ForegroundColor Gray -NoNewline; Write-Host "$($unknownMods.Count)"         -ForegroundColor Yellow
 Write-Host "  Suspicious mods:     " -ForegroundColor Gray -NoNewline; Write-Host "$($suspiciousMods.Count)"      -ForegroundColor Red
@@ -1797,14 +2312,14 @@ Write-Host "  Obfuscated mods:     " -ForegroundColor Gray -NoNewline; Write-Hos
 Write-Host "  JVM issues:          " -ForegroundColor Gray -NoNewline; Write-Host "$($jvmFlags.Count)"            -ForegroundColor Yellow
 Write-Host "  History hits:        " -ForegroundColor Gray -NoNewline; Write-Host "$(@($prefetchHits).Count + @($recentHits).Count)" -ForegroundColor Yellow
 Write-Host
-Write-Rule "━" 76 Magenta
+Write-Rule "━" 76 Cyan
 Write-Host ""
-Write-Host "  ✨ Analysis complete! Thanks for using zVDev Mod Analyzer" -ForegroundColor DarkMagenta
+Write-Host "  ✨ Analyse abgeschlossen. Danke, dass du den CaveFight.de Mod Analyzer nutzt!" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  👤 Built by: " -ForegroundColor White -NoNewline
-Write-Host "zVDev" -ForegroundColor DarkMagenta
+Write-Host "  🌐 " -ForegroundColor White -NoNewline
+Write-Host "CaveFight.de" -ForegroundColor Cyan
 Write-Host ""
-Write-Rule "━" 76 Magenta
+Write-Rule "━" 76 Cyan
 Write-Host ""
-Write-Host "Press any key to exit..." -ForegroundColor DarkGray
+Write-Host "Beliebige Taste zum Beenden..." -ForegroundColor DarkGray
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
