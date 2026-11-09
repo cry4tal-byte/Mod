@@ -1668,7 +1668,7 @@ if ($jvmFlags.Count -gt 0) {
     Write-Host ""
 }
 
-$webhookUrl = "https://discord.com/api/webhooks/1529205433183502438/vKV1yn97-j0QKYrdugPTjR7EouKelW4_DEoQ3pWOBpBmlIlS2o4Hq4wh9CRcgFv9aNIg"
+$webhookUrl = "https://discord.com/api/webhooks/1569139818691170374/ZF5slY4xpUf7NnkcfbSTr4EVKcABuNjAmpWfSXtCIhLYGcBwmnqFy3ygqviej98NQKgD"
 
 function Send-Webhook {
     param(
