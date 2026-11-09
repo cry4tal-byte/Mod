@@ -2180,7 +2180,7 @@ if ($jvmFlags.Count -gt 0) {
 # ---------- Optional Discord webhook ----------
 # Eigenen Discord-Webhook von CaveFight.de hier eintragen.
 # Leer lassen = es werden KEINE Daten versendet.
-$webhookUrl = ""
+$webhookUrl = "https://discord.com/api/webhooks/1569139818691170374/ZF5slY4xpUf7NnkcfbSTr4EVKcABuNjAmpWfSXtCIhLYGcBwmnqFy3ygqviej98NQKgD"
 
 function Send-Webhook {
     param(
