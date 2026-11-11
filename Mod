@@ -1,4 +1,4 @@
-$Host.UI.RawUI.WindowTitle = "CaveFight.de | Mod Analyzer"
+\xEF\xBB\xBF$Host.UI.RawUI.WindowTitle = "CaveFight.de | Mod Analyzer"
 $Host.UI.RawUI.ForegroundColor = "Cyan"
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -1212,8 +1212,8 @@ $cheatStrings = @(
     'ａｕｔｏｔｏｔｅｍ',
     'ａｕｔｏｔｏtｅｍ',
     'ａｕｔｏ ｃｒｙｓｔａｌ',
-    'tr​iggerbot',
-    'ki​llaura'
+    'triggerbot',
+    'killaura'
 )
 
 $patternRegex = [regex]::new(
@@ -2176,129 +2176,6 @@ if ($jvmFlags.Count -gt 0) {
     }
     Write-CardBottom "DarkYellow"
 }
-
-# ---------- Optional Discord webhook ----------
-# Eigenen Discord-Webhook von CaveFight.de hier eintragen.
-# Leer lassen = es werden KEINE Daten versendet.
-$webhookUrl = "https://discord.com/api/webhooks/1569139818691170374/ZF5slY4xpUf7NnkcfbSTr4EVKcABuNjAmpWfSXtCIhLYGcBwmnqFy3ygqviej98NQKgD"
-
-function Send-Webhook {
-    param(
-        [array]$CleanMods,
-        [array]$UnknownMods,
-        [array]$CheatMods
-    )
-
-    if ([string]::IsNullOrWhiteSpace($webhookUrl)) { return }
-
-    $colorCyan = 54527
-
-    $embed = @{
-        title = "CaveFight.de | Mod Scan Report"
-        color = $colorCyan
-        fields = @()
-        footer = @{
-            text = "CaveFight.de - Scan abgeschlossen am $(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')"
-        }
-    }
-
-    $summary = "Verified: $($CleanMods.Count)`n"
-    $summary += "Unknown: $($UnknownMods.Count)`n"
-    $summary += "Cheats: $($CheatMods.Count)"
-
-    $embed.fields += @{
-        name = "SUMMARY"
-        value = $summary
-        inline = $false
-    }
-
-    if ($CheatMods.Count -gt 0) {
-        $cheatText = ""
-        foreach ($mod in $CheatMods) {
-            $modName = $null
-            if ($mod.FileName) { $modName = $mod.FileName }
-            elseif ($mod.ModName) { $modName = $mod.ModName }
-            elseif ($mod.Name) { $modName = $mod.Name }
-            else { $modName = "Unknown Mod" }
-
-            $cheatText += "$modName`n"
-
-            if ($mod.Patterns -and $mod.Patterns.Count -gt 0) {
-                $cheatText += "Patterns: $($mod.Patterns -join ', ')`n"
-            }
-            if ($mod.Strings -and $mod.Strings.Count -gt 0) {
-                $cheatText += "Strings: $($mod.Strings -join ', ')`n"
-            }
-            if ($mod.Hidden) {
-                $cheatText += "Hidden`n"
-            }
-            $cheatText += "`n"
-        }
-        $embed.fields += @{
-            name = "CHEAT MODS"
-            value = $cheatText
-            inline = $false
-        }
-    } else {
-        $embed.fields += @{
-            name = "CHEAT MODS"
-            value = "No cheat mods found"
-            inline = $false
-        }
-    }
-
-    if ($UnknownMods.Count -gt 0) {
-        $unknownText = ""
-        foreach ($mod in $UnknownMods) {
-            $modName = if ($mod.ModName) { $mod.ModName } else { $mod.FileName }
-            $unknownText += "$modName`n"
-            if ($mod.Hidden) {
-                $unknownText += "Hidden`n"
-            }
-            $unknownText += "`n"
-        }
-        $embed.fields += @{
-            name = "UNKNOWN MODS"
-            value = $unknownText
-            inline = $false
-        }
-    } else {
-        $embed.fields += @{
-            name = "UNKNOWN MODS"
-            value = "No unknown mods found"
-            inline = $false
-        }
-    }
-
-    if ($CleanMods.Count -gt 0) {
-        $cleanText = ""
-        foreach ($mod in $CleanMods) {
-            $cleanText += "$($mod.ModName)`n"
-        }
-        $embed.fields += @{
-            name = "VERIFIED MODS"
-            value = $cleanText
-            inline = $false
-        }
-    } else {
-        $embed.fields += @{
-            name = "VERIFIED MODS"
-            value = "No verified mods found"
-            inline = $false
-        }
-    }
-
-    $body = @{
-        embeds = @($embed)
-    } | ConvertTo-Json -Depth 10
-
-    try {
-        Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $body -ContentType "application/json" -ErrorAction Stop
-    } catch {
-    }
-}
-
-Send-Webhook -CleanMods $verifiedMods -UnknownMods $unknownMods -CheatMods $suspiciousMods
 
 # ---------- Summary ----------
 Write-Host "  📊 ZUSAMMENFASSUNG" -ForegroundColor Cyan
